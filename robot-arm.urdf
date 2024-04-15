@@ -1,0 +1,107 @@
+<?xml version="1.0"?>
+<robot name="low_cost_robot_arm">
+
+  <material name="red">
+    <color rgba="0.8 0 0 1"/>
+  </material>
+  <material name="gray">
+    <color rgba="0.8 0.8 0.8 1"/>
+  </material>
+
+  <link name="base_link">
+  </link>
+
+  <link name="motor1">
+  </link>
+
+  <link name="motor2">
+  </link>
+
+  <link name="armature1">
+  </link>
+
+  <link name="motor3">
+  </link>
+
+  <link name="motor4">
+  </link>
+
+  <link name="bottom_gripper_tip">
+  </link>
+
+  <link name="target">
+  </link>
+
+  <!--
+
+    Joints are defined at the origin point, which in turn is relative to the
+    parent joint's coordinate system.
+
+    Example:
+
+    - Motor1 rotates about the y (up) axis. That is, it controls "yaw" for the
+      entire arm.
+    - Base link is assumed to be at the origin of the robot, the bottom of its
+      base.
+    - Base-to-Motor1 is at the origin.
+    - Motor1-to-Motor2 is at the position of the Motor1 axis, 40.9mm above
+      Base. The next link is Motor2. Motor1 is the parent link, Motor2 the\
+      child.
+    - So, the joints are defined at the position of the "parent" link.
+
+    Helpful procedure for writing URDF: https://answers.ros.org/question/140061/urdf-and-frames-of-reference/
+
+  -->
+
+  <joint name="base_to_motor1" type="fixed">
+    <parent link="base_link" />
+    <child link="motor1" />
+    <origin xyz="0 0 0" />
+  </joint>
+
+  <joint name="motor1_to_motor2" type="revolute">
+    <parent link="motor1" />
+    <child link="motor2" />
+    <origin xyz="0 0 40.9" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.570796326795" upper="1.570796326795" />  <!-- [-90,90] -->
+  </joint>
+
+  <joint name="motor2_to_armature1" type="revolute">
+    <parent link="motor2" />
+    <child link="armature1" />
+    <origin xyz="0 0 15.4" />
+    <axis xyz="1 0 0" />
+    <limit lower="-1.570796326795" upper="0.349065850399" />  <!-- [-90,20] -->
+  </joint>
+
+  <joint name="armature1_to_motor3" type="fixed">
+    <parent link="armature1" />
+    <child link="motor3" />
+    <origin xyz="0 0 178.041" />
+  </joint>
+
+  <joint name="motor3_to_motor4" type="revolute">
+    <parent link="motor3" />
+    <child link="motor4" />
+    <origin xyz="0 14.8 0" />
+    <axis xyz="1 0 0" />
+    <limit lower="-1.570796326795" upper="1.570796326795" />  <!-- [-90,90] -->
+  </joint>
+
+  <joint name="motor4_to_bottom_gripper_tip" type="revolute">
+    <parent link="motor4" />
+    <child link="bottom_gripper_tip" />
+    <origin xyz="-1.053 43.488 -1.163" />
+    <axis xyz="0 1 0" />
+    <limit lower="-0.001" upper="3.14159265" /> <!-- [0,180] -->
+  </joint>
+
+  <joint name="bottom_gripper_tip_to_target" type="fixed">
+    <parent link="bottom_gripper_tip" />
+    <child link="target" />
+    <origin xyz="7.358 70.318 0.537" />
+  </joint>
+
+
+</robot>
