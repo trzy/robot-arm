@@ -502,6 +502,22 @@ def serial_ports():
             pass
     return result
 
+def find_serial_port(port_pattern: str) -> str | None:
+    # If port contains wildcard characters, we need to compare against all ports, otherwise we just
+    # return the port the user specified
+    if "*" in port_pattern or "?" in port_pattern or "[" in port_pattern:
+        import fnmatch
+        ports = serial_ports()
+        matches = [port for port in ports if fnmatch.fnmatch(name=port, pat=port_pattern)]
+        if len(matches) == 0:
+            print("Error: No matching ports found")
+            return None
+        if len(matches) > 1:
+            print(f"Error: Multiple ports match given pattern: {', '.join(ports)}")
+            return None
+        return matches[0]
+    else:
+        return port_pattern
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("robotest")
@@ -518,7 +534,9 @@ if __name__ == "__main__":
         print("\n".join(ports))
         exit()
 
-    port = ports[0] if options.port is None else options.port
+    port = ports[0] if options.port is None else find_serial_port(port_pattern=options.port)
+    if port is None:
+        exit()
     print(f"Using {port}")
 
     dynamixel = Dynamixel.Config(
