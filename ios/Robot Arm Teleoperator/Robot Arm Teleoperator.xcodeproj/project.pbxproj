@@ -1,0 +1,645 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		CC0893D22BCF399B00D82209 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0893D12BCF399B00D82209 /* AppDelegate.swift */; };
+		CC0893D42BCF399B00D82209 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0893D32BCF399B00D82209 /* ContentView.swift */; };
+		CC0893D62BCF399C00D82209 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CC0893D52BCF399C00D82209 /* Assets.xcassets */; };
+		CC0893D92BCF399C00D82209 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CC0893D82BCF399C00D82209 /* Preview Assets.xcassets */; };
+		CC0893E32BCF399C00D82209 /* Robot_Arm_TeleoperatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0893E22BCF399C00D82209 /* Robot_Arm_TeleoperatorTests.swift */; };
+		CC0893ED2BCF399C00D82209 /* Robot_Arm_TeleoperatorUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0893EC2BCF399C00D82209 /* Robot_Arm_TeleoperatorUITests.swift */; };
+		CC0893EF2BCF399C00D82209 /* Robot_Arm_TeleoperatorUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0893EE2BCF399C00D82209 /* Robot_Arm_TeleoperatorUITestsLaunchTests.swift */; };
+		CC0893FE2BCF39E300D82209 /* AsyncTCPConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0893FC2BCF39E300D82209 /* AsyncTCPConnection.swift */; };
+		CC0893FF2BCF39E300D82209 /* JSONMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0893FD2BCF39E300D82209 /* JSONMessage.swift */; };
+		CC0894052BCF3A6100D82209 /* simd_float3+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0894012BCF3A6100D82209 /* simd_float3+Extensions.swift */; };
+		CC0894062BCF3A6100D82209 /* simd_float4x4+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0894022BCF3A6100D82209 /* simd_float4x4+Extensions.swift */; };
+		CC0894072BCF3A6100D82209 /* float+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0894032BCF3A6100D82209 /* float+Extensions.swift */; };
+		CC0894082BCF3A6100D82209 /* simd_quatf+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0894042BCF3A6100D82209 /* simd_quatf+Extensions.swift */; };
+		CC08940A2BCF3E6000D82209 /* Teleoperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0894092BCF3E6000D82209 /* Teleoperation.swift */; };
+		CC08940C2BCF3EF000D82209 /* Messages.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC08940B2BCF3EF000D82209 /* Messages.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		CC0893DF2BCF399C00D82209 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CC0893C62BCF399B00D82209 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CC0893CD2BCF399B00D82209;
+			remoteInfo = "Robot Arm Teleoperator";
+		};
+		CC0893E92BCF399C00D82209 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CC0893C62BCF399B00D82209 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CC0893CD2BCF399B00D82209;
+			remoteInfo = "Robot Arm Teleoperator";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		CC0893CE2BCF399B00D82209 /* Robot Arm Teleoperator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Robot Arm Teleoperator.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		CC0893D12BCF399B00D82209 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		CC0893D32BCF399B00D82209 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		CC0893D52BCF399C00D82209 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		CC0893D82BCF399C00D82209 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		CC0893DE2BCF399C00D82209 /* Robot Arm TeleoperatorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Robot Arm TeleoperatorTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		CC0893E22BCF399C00D82209 /* Robot_Arm_TeleoperatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Robot_Arm_TeleoperatorTests.swift; sourceTree = "<group>"; };
+		CC0893E82BCF399C00D82209 /* Robot Arm TeleoperatorUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Robot Arm TeleoperatorUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		CC0893EC2BCF399C00D82209 /* Robot_Arm_TeleoperatorUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Robot_Arm_TeleoperatorUITests.swift; sourceTree = "<group>"; };
+		CC0893EE2BCF399C00D82209 /* Robot_Arm_TeleoperatorUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Robot_Arm_TeleoperatorUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		CC0893FC2BCF39E300D82209 /* AsyncTCPConnection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AsyncTCPConnection.swift; sourceTree = "<group>"; };
+		CC0893FD2BCF39E300D82209 /* JSONMessage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JSONMessage.swift; sourceTree = "<group>"; };
+		CC0894012BCF3A6100D82209 /* simd_float3+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "simd_float3+Extensions.swift"; sourceTree = "<group>"; };
+		CC0894022BCF3A6100D82209 /* simd_float4x4+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "simd_float4x4+Extensions.swift"; sourceTree = "<group>"; };
+		CC0894032BCF3A6100D82209 /* float+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "float+Extensions.swift"; sourceTree = "<group>"; };
+		CC0894042BCF3A6100D82209 /* simd_quatf+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "simd_quatf+Extensions.swift"; sourceTree = "<group>"; };
+		CC0894092BCF3E6000D82209 /* Teleoperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Teleoperation.swift; sourceTree = "<group>"; };
+		CC08940B2BCF3EF000D82209 /* Messages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Messages.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CC0893CB2BCF399B00D82209 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CC0893DB2BCF399C00D82209 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CC0893E52BCF399C00D82209 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		CC0893C52BCF399B00D82209 = {
+			isa = PBXGroup;
+			children = (
+				CC0893D02BCF399B00D82209 /* Robot Arm Teleoperator */,
+				CC0893E12BCF399C00D82209 /* Robot Arm TeleoperatorTests */,
+				CC0893EB2BCF399C00D82209 /* Robot Arm TeleoperatorUITests */,
+				CC0893CF2BCF399B00D82209 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		CC0893CF2BCF399B00D82209 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				CC0893CE2BCF399B00D82209 /* Robot Arm Teleoperator.app */,
+				CC0893DE2BCF399C00D82209 /* Robot Arm TeleoperatorTests.xctest */,
+				CC0893E82BCF399C00D82209 /* Robot Arm TeleoperatorUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CC0893D02BCF399B00D82209 /* Robot Arm Teleoperator */ = {
+			isa = PBXGroup;
+			children = (
+				CC0893FB2BCF39C200D82209 /* Networking */,
+				CC0894002BCF3A3D00D82209 /* Util */,
+				CC0893D12BCF399B00D82209 /* AppDelegate.swift */,
+				CC0893D32BCF399B00D82209 /* ContentView.swift */,
+				CC0893D52BCF399C00D82209 /* Assets.xcassets */,
+				CC0893D72BCF399C00D82209 /* Preview Content */,
+				CC0894092BCF3E6000D82209 /* Teleoperation.swift */,
+				CC08940B2BCF3EF000D82209 /* Messages.swift */,
+			);
+			path = "Robot Arm Teleoperator";
+			sourceTree = "<group>";
+		};
+		CC0893D72BCF399C00D82209 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				CC0893D82BCF399C00D82209 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		CC0893E12BCF399C00D82209 /* Robot Arm TeleoperatorTests */ = {
+			isa = PBXGroup;
+			children = (
+				CC0893E22BCF399C00D82209 /* Robot_Arm_TeleoperatorTests.swift */,
+			);
+			path = "Robot Arm TeleoperatorTests";
+			sourceTree = "<group>";
+		};
+		CC0893EB2BCF399C00D82209 /* Robot Arm TeleoperatorUITests */ = {
+			isa = PBXGroup;
+			children = (
+				CC0893EC2BCF399C00D82209 /* Robot_Arm_TeleoperatorUITests.swift */,
+				CC0893EE2BCF399C00D82209 /* Robot_Arm_TeleoperatorUITestsLaunchTests.swift */,
+			);
+			path = "Robot Arm TeleoperatorUITests";
+			sourceTree = "<group>";
+		};
+		CC0893FB2BCF39C200D82209 /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				CC0893FC2BCF39E300D82209 /* AsyncTCPConnection.swift */,
+				CC0893FD2BCF39E300D82209 /* JSONMessage.swift */,
+			);
+			path = Networking;
+			sourceTree = "<group>";
+		};
+		CC0894002BCF3A3D00D82209 /* Util */ = {
+			isa = PBXGroup;
+			children = (
+				CC0894032BCF3A6100D82209 /* float+Extensions.swift */,
+				CC0894012BCF3A6100D82209 /* simd_float3+Extensions.swift */,
+				CC0894022BCF3A6100D82209 /* simd_float4x4+Extensions.swift */,
+				CC0894042BCF3A6100D82209 /* simd_quatf+Extensions.swift */,
+			);
+			path = Util;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		CC0893CD2BCF399B00D82209 /* Robot Arm Teleoperator */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CC0893F22BCF399C00D82209 /* Build configuration list for PBXNativeTarget "Robot Arm Teleoperator" */;
+			buildPhases = (
+				CC0893CA2BCF399B00D82209 /* Sources */,
+				CC0893CB2BCF399B00D82209 /* Frameworks */,
+				CC0893CC2BCF399B00D82209 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Robot Arm Teleoperator";
+			productName = "Robot Arm Teleoperator";
+			productReference = CC0893CE2BCF399B00D82209 /* Robot Arm Teleoperator.app */;
+			productType = "com.apple.product-type.application";
+		};
+		CC0893DD2BCF399C00D82209 /* Robot Arm TeleoperatorTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CC0893F52BCF399C00D82209 /* Build configuration list for PBXNativeTarget "Robot Arm TeleoperatorTests" */;
+			buildPhases = (
+				CC0893DA2BCF399C00D82209 /* Sources */,
+				CC0893DB2BCF399C00D82209 /* Frameworks */,
+				CC0893DC2BCF399C00D82209 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CC0893E02BCF399C00D82209 /* PBXTargetDependency */,
+			);
+			name = "Robot Arm TeleoperatorTests";
+			productName = "Robot Arm TeleoperatorTests";
+			productReference = CC0893DE2BCF399C00D82209 /* Robot Arm TeleoperatorTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		CC0893E72BCF399C00D82209 /* Robot Arm TeleoperatorUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CC0893F82BCF399C00D82209 /* Build configuration list for PBXNativeTarget "Robot Arm TeleoperatorUITests" */;
+			buildPhases = (
+				CC0893E42BCF399C00D82209 /* Sources */,
+				CC0893E52BCF399C00D82209 /* Frameworks */,
+				CC0893E62BCF399C00D82209 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CC0893EA2BCF399C00D82209 /* PBXTargetDependency */,
+			);
+			name = "Robot Arm TeleoperatorUITests";
+			productName = "Robot Arm TeleoperatorUITests";
+			productReference = CC0893E82BCF399C00D82209 /* Robot Arm TeleoperatorUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		CC0893C62BCF399B00D82209 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1530;
+				LastUpgradeCheck = 1530;
+				TargetAttributes = {
+					CC0893CD2BCF399B00D82209 = {
+						CreatedOnToolsVersion = 15.3;
+					};
+					CC0893DD2BCF399C00D82209 = {
+						CreatedOnToolsVersion = 15.3;
+						TestTargetID = CC0893CD2BCF399B00D82209;
+					};
+					CC0893E72BCF399C00D82209 = {
+						CreatedOnToolsVersion = 15.3;
+						TestTargetID = CC0893CD2BCF399B00D82209;
+					};
+				};
+			};
+			buildConfigurationList = CC0893C92BCF399B00D82209 /* Build configuration list for PBXProject "Robot Arm Teleoperator" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = CC0893C52BCF399B00D82209;
+			productRefGroup = CC0893CF2BCF399B00D82209 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				CC0893CD2BCF399B00D82209 /* Robot Arm Teleoperator */,
+				CC0893DD2BCF399C00D82209 /* Robot Arm TeleoperatorTests */,
+				CC0893E72BCF399C00D82209 /* Robot Arm TeleoperatorUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		CC0893CC2BCF399B00D82209 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CC0893D92BCF399C00D82209 /* Preview Assets.xcassets in Resources */,
+				CC0893D62BCF399C00D82209 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CC0893DC2BCF399C00D82209 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CC0893E62BCF399C00D82209 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		CC0893CA2BCF399B00D82209 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CC0894072BCF3A6100D82209 /* float+Extensions.swift in Sources */,
+				CC08940A2BCF3E6000D82209 /* Teleoperation.swift in Sources */,
+				CC0894052BCF3A6100D82209 /* simd_float3+Extensions.swift in Sources */,
+				CC0893D42BCF399B00D82209 /* ContentView.swift in Sources */,
+				CC0893FE2BCF39E300D82209 /* AsyncTCPConnection.swift in Sources */,
+				CC0893D22BCF399B00D82209 /* AppDelegate.swift in Sources */,
+				CC0894062BCF3A6100D82209 /* simd_float4x4+Extensions.swift in Sources */,
+				CC08940C2BCF3EF000D82209 /* Messages.swift in Sources */,
+				CC0894082BCF3A6100D82209 /* simd_quatf+Extensions.swift in Sources */,
+				CC0893FF2BCF39E300D82209 /* JSONMessage.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CC0893DA2BCF399C00D82209 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CC0893E32BCF399C00D82209 /* Robot_Arm_TeleoperatorTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CC0893E42BCF399C00D82209 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CC0893EF2BCF399C00D82209 /* Robot_Arm_TeleoperatorUITestsLaunchTests.swift in Sources */,
+				CC0893ED2BCF399C00D82209 /* Robot_Arm_TeleoperatorUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		CC0893E02BCF399C00D82209 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CC0893CD2BCF399B00D82209 /* Robot Arm Teleoperator */;
+			targetProxy = CC0893DF2BCF399C00D82209 /* PBXContainerItemProxy */;
+		};
+		CC0893EA2BCF399C00D82209 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CC0893CD2BCF399B00D82209 /* Robot Arm Teleoperator */;
+			targetProxy = CC0893E92BCF399C00D82209 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		CC0893F02BCF399C00D82209 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		CC0893F12BCF399C00D82209 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		CC0893F32BCF399C00D82209 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Robot Arm Teleoperator/Preview Content\"";
+				DEVELOPMENT_TEAM = 7T2874S592;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = arkit;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.cambrianmoment.robot-arm-teleoperator";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		CC0893F42BCF399C00D82209 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Robot Arm Teleoperator/Preview Content\"";
+				DEVELOPMENT_TEAM = 7T2874S592;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = arkit;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.cambrianmoment.robot-arm-teleoperator";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		CC0893F62BCF399C00D82209 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7T2874S592;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.cambrianmoment.Robot-Arm-TeleoperatorTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Robot Arm Teleoperator.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Robot Arm Teleoperator";
+			};
+			name = Debug;
+		};
+		CC0893F72BCF399C00D82209 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7T2874S592;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.cambrianmoment.Robot-Arm-TeleoperatorTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Robot Arm Teleoperator.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Robot Arm Teleoperator";
+			};
+			name = Release;
+		};
+		CC0893F92BCF399C00D82209 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7T2874S592;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.cambrianmoment.Robot-Arm-TeleoperatorUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "Robot Arm Teleoperator";
+			};
+			name = Debug;
+		};
+		CC0893FA2BCF399C00D82209 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7T2874S592;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.cambrianmoment.Robot-Arm-TeleoperatorUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "Robot Arm Teleoperator";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		CC0893C92BCF399B00D82209 /* Build configuration list for PBXProject "Robot Arm Teleoperator" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CC0893F02BCF399C00D82209 /* Debug */,
+				CC0893F12BCF399C00D82209 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CC0893F22BCF399C00D82209 /* Build configuration list for PBXNativeTarget "Robot Arm Teleoperator" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CC0893F32BCF399C00D82209 /* Debug */,
+				CC0893F42BCF399C00D82209 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CC0893F52BCF399C00D82209 /* Build configuration list for PBXNativeTarget "Robot Arm TeleoperatorTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CC0893F62BCF399C00D82209 /* Debug */,
+				CC0893F72BCF399C00D82209 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CC0893F82BCF399C00D82209 /* Build configuration list for PBXNativeTarget "Robot Arm TeleoperatorUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CC0893F92BCF399C00D82209 /* Debug */,
+				CC0893FA2BCF399C00D82209 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = CC0893C62BCF399B00D82209 /* Project object */;
+}
