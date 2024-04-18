@@ -45,6 +45,7 @@ class RobotArmServer(MessageHandler):
         self.sessions = set()
         self._server = Server(port=port, message_handler=self)
         self._arm = arm
+        self._position = np.array([ 0, 5*2.54*1e-2, 5*2.54*1e-2 ])
     
     async def run(self):
         await self._server.run()
@@ -65,9 +66,9 @@ class RobotArmServer(MessageHandler):
     @handler(PoseUpdateMessage)
     async def handle_PoseUpdateMessage(self, session: Session, msg: PoseUpdateMessage, timestamp: float):
         #print(f"Pose received: {msg}")
-        origin_position = np.array([ 0, 5*2.54*1e-2, 5*2.54*1e-2 ])
-        position = origin_position + np.array(msg.deltaPosition)
-        self._arm.set_end_effector_target_position(position=position)
+        
+        self._position = self._position + np.array(msg.deltaPosition)
+        self._arm.set_end_effector_target_position(position=self._position)
 
 
 
@@ -97,8 +98,8 @@ if __name__ == "__main__":
 
     port = get_serial_port()
     arm = Arm(port=port)
-#    arm.set_joint_goals(degrees=[0,0,0,0,0])
-    arm.set_end_effector_target_position(position=[0, 5*2.54*1e-2, 5*2.54*1e-2 ])
+    arm.set_joint_goals(degrees=[0,0,0,0,0])
+#    arm.set_end_effector_target_position(position=[0, 5*2.54*1e-2, 5*2.54*1e-2 ])
 
     tasks = []
     server = RobotArmServer(port=8000, arm=arm)
