@@ -10,13 +10,26 @@ import SwiftUI
 import RealityKit
 
 struct ContentView : View {
+    @StateObject var teleoperation = Teleoperation()
+
     var body: some View {
-        ARViewContainer().edgesIgnoringSafeArea(.all)
+        ARViewContainer(teleoperation: teleoperation)
+            .edgesIgnoringSafeArea(.all)
+            .onTouchDown {
+                teleoperation.transmitting = true
+            }
+            .onTouchUp {
+                teleoperation.transmitting = false
+            }
     }
 }
 
 struct ARViewContainer: UIViewRepresentable {
-    @ObservedObject private var _teleoperation = Teleoperation()
+    @ObservedObject private var _teleoperation: Teleoperation
+
+    init(teleoperation: Teleoperation) {
+        _teleoperation = teleoperation
+    }
 
     func makeUIView(context: Context) -> ARView {
         let arView = ARView(frame: .zero)
@@ -40,8 +53,8 @@ struct ARViewContainer: UIViewRepresentable {
         return arView
     }
     
-    func updateUIView(_ uiView: ARView, context: Context) {}
-    
+    func updateUIView(_ uiView: ARView, context: Context) {
+    }
 }
 
 #Preview {

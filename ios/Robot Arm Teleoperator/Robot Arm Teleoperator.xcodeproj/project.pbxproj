@@ -22,6 +22,7 @@
 		CC0894082BCF3A6100D82209 /* simd_quatf+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0894042BCF3A6100D82209 /* simd_quatf+Extensions.swift */; };
 		CC08940A2BCF3E6000D82209 /* Teleoperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0894092BCF3E6000D82209 /* Teleoperation.swift */; };
 		CC08940C2BCF3EF000D82209 /* Messages.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC08940B2BCF3EF000D82209 /* Messages.swift */; };
+		CC4510462BD06F390008AFE1 /* OnTouch.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC4510452BD06F390008AFE1 /* OnTouch.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -60,6 +61,7 @@
 		CC0894042BCF3A6100D82209 /* simd_quatf+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "simd_quatf+Extensions.swift"; sourceTree = "<group>"; };
 		CC0894092BCF3E6000D82209 /* Teleoperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Teleoperation.swift; sourceTree = "<group>"; };
 		CC08940B2BCF3EF000D82209 /* Messages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Messages.swift; sourceTree = "<group>"; };
+		CC4510452BD06F390008AFE1 /* OnTouch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnTouch.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,6 +114,7 @@
 			children = (
 				CC0893FB2BCF39C200D82209 /* Networking */,
 				CC0894002BCF3A3D00D82209 /* Util */,
+				CC4510442BD06F270008AFE1 /* Views */,
 				CC0893D12BCF399B00D82209 /* AppDelegate.swift */,
 				CC0893D32BCF399B00D82209 /* ContentView.swift */,
 				CC0893D52BCF399C00D82209 /* Assets.xcassets */,
@@ -165,6 +168,14 @@
 				CC0894042BCF3A6100D82209 /* simd_quatf+Extensions.swift */,
 			);
 			path = Util;
+			sourceTree = "<group>";
+		};
+		CC4510442BD06F270008AFE1 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				CC4510452BD06F390008AFE1 /* OnTouch.swift */,
+			);
+			path = Views;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -300,6 +311,7 @@
 				CC0894072BCF3A6100D82209 /* float+Extensions.swift in Sources */,
 				CC08940A2BCF3E6000D82209 /* Teleoperation.swift in Sources */,
 				CC0894052BCF3A6100D82209 /* simd_float3+Extensions.swift in Sources */,
+				CC4510462BD06F390008AFE1 /* OnTouch.swift in Sources */,
 				CC0893D42BCF399B00D82209 /* ContentView.swift in Sources */,
 				CC0893FE2BCF39E300D82209 /* AsyncTCPConnection.swift in Sources */,
 				CC0893D22BCF399B00D82209 /* AppDelegate.swift in Sources */,

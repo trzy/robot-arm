@@ -13,6 +13,16 @@ class Teleoperation: ObservableObject {
     private var _task: Task<Void, Never>!
     private var _subscriptions: [Cancellable] = []
     private var _connection: AsyncTCPConnection?
+    private var _lastPose: Matrix4x4 = .identity
+    private var _initialPose: Matrix4x4 = .identity
+
+    /// Set `true` to transmit poses to robot. Each time this is changed from `false` to `true`,
+    /// the reference pose is reset to the current pose. Pose updates will be relative to it.
+    var transmitting: Bool = false {
+        didSet {
+            _initialPose = _lastPose
+        }
+    }
 
     init() {
         _task = Task {
@@ -29,8 +39,11 @@ class Teleoperation: ObservableObject {
     }
 
     func onUpdate(event: SceneEvents.Update, pose: Matrix4x4) {
-        log("\(pose.position)")
-        _connection?.send(TransformMessage(matrix: pose))
+        _lastPose = pose
+        if transmitting {
+            let deltaPosition = pose.position - _initialPose.position
+            _connection?.send(PoseUpdateMessage(initialPose: _initialPose, pose: pose, deltaPosition: deltaPosition))
+        }
     }
 
     private func runTask() async {

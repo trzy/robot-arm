@@ -9,6 +9,8 @@ struct HelloMessage: JSONMessage {
     let message: String
 }
 
-struct TransformMessage: JSONMessage {
-    let matrix: Matrix4x4
+struct PoseUpdateMessage: JSONMessage {
+    let initialPose: Matrix4x4
+    let pose: Matrix4x4
+    let deltaPosition: Vector3
 }
