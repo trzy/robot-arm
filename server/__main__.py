@@ -15,7 +15,7 @@ import numpy as np
 from pydantic import BaseModel
 
 from .networking import Server, Session, handler, MessageHandler
-from .robot import serial_ports, find_serial_port, Arm
+from .robot import serial_ports, find_serial_port, ArmProcess
 
 
 ####################################################################################################
@@ -40,12 +40,13 @@ class PoseUpdateMessage(BaseModel):
 ####################################################################################################
 
 class RobotArmServer(MessageHandler):
-    def __init__(self, port: int, arm: Arm):
+    def __init__(self, port: int, arm_process: ArmProcess):
         super().__init__()
         self.sessions = set()
         self._server = Server(port=port, message_handler=self)
-        self._arm = arm
-        self._position = np.array([ 0, 5*2.54*1e-2, 5*2.54*1e-2 ])
+        self._arm_process = arm_process
+        self._position = np.array([ 0, 5*2.54*1e-2, 9*2.54*1e-2 ])  # pretty close to 0 position
+        arm_process.move_end_effector(position=self._position)
     
     async def run(self):
         await self._server.run()
@@ -65,11 +66,16 @@ class RobotArmServer(MessageHandler):
     
     @handler(PoseUpdateMessage)
     async def handle_PoseUpdateMessage(self, session: Session, msg: PoseUpdateMessage, timestamp: float):
-        #print(f"Pose received: {msg}")
-        
-        self._position = self._position + np.array(msg.deltaPosition)
-        self._arm.set_end_effector_target_position(position=self._position)
+        # Convert (x,y,z) from ARKit -> (x,z,y) in robot frame
+        x = msg.deltaPosition[0]    # robot X axis is to the right
+        y = -msg.deltaPosition[2]   # robot Y axis is in front
+        z = msg.deltaPosition[1]    # robot Z axis is up
+        delta_position = np.array([ x, y, z ])
 
+        # Move arm if it is not busy
+        if not self._arm_process.is_busy():
+            position = self._position + delta_position
+            self._arm_process.move_end_effector(position=position)
 
 
 ####################################################################################################
@@ -97,12 +103,10 @@ if __name__ == "__main__":
     options = parser.parse_args()
 
     port = get_serial_port()
-    arm = Arm(port=port)
-    arm.set_joint_goals(degrees=[0,0,0,0,0])
-#    arm.set_end_effector_target_position(position=[0, 5*2.54*1e-2, 5*2.54*1e-2 ])
+    arm_process = ArmProcess(serial_port=port)
 
     tasks = []
-    server = RobotArmServer(port=8000, arm=arm)
+    server = RobotArmServer(port=8000, arm_process=arm_process)
     loop = asyncio.new_event_loop()
     tasks.append(loop.create_task(server.run()))
     try:

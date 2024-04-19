@@ -81,7 +81,7 @@ class Arm:
     def __del__(self):
         self._disable_torque()
     
-    def set_end_effector_target_position(self, position: List[float]):
+    def set_end_effector_target_position(self, position: np.ndarray):
         # Note: joints here are the URDF joints (as opposed to API's notion of joints, which are just
         # the motors)
         motor_id_by_joint_idx = { 2: 1, 3: 2, 5: 3, 6: 4 }
@@ -99,7 +99,10 @@ class Arm:
             motor_radians.append(radians)
         motor_radians[1] = -motor_radians[1]
 
-        # Temporary: gripper position to 0
+        # Temporary: gripper rotation fixed to 0
+        motor_radians[-1] = 0
+
+        # Temporary: gripper open position to 0
         motor_radians.append(0)
 
         # Set position
