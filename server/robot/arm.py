@@ -104,23 +104,26 @@ class Arm:
             else:
                 initial_joint_radians.append(0)
 
-        # IK
-        frame_target = np.eye(4)
-        frame_target[:3, 3] = position_mm
-        joint_radians = self._chain.inverse_kinematics_frame(
-            target=frame_target,
-            initial_position=np.array(initial_joint_radians),
-            orientation_mode=None,
-            no_position=False
-        )
-#        print(joint_radians)
-#        joint_radians = self._chain.inverse_kinematics(target_position=position_mm)
+        # IK w/ initial position
+        # frame_target = np.eye(4)
+        # frame_target[:3, 3] = position_mm
+        # joint_radians = self._chain.inverse_kinematics_frame(
+        #     target=frame_target,
+        #     initial_position=np.array(initial_joint_radians),
+        #     orientation_mode=None,
+        #     no_position=False
+        # )
+
+        # IK from rest pose
+        joint_radians = self._chain.inverse_kinematics(target_position=position_mm)
+
+        # Get target motor angles
         motor_radians = []
         for motor_id in sorted(joint_idx_by_motor_id.keys()):
             joint_idx = joint_idx_by_motor_id[motor_id]
             radians = joint_radians[joint_idx]
             motor_radians.append(radians)
-        motor_radians[1] = -motor_radians[1]
+        motor_radians[1] = -motor_radians[1]    # need this correction for motor ID=2
 
         # Temporary: gripper rotation fixed to 0
         motor_radians[-1] = 0
