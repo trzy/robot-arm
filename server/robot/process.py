@@ -106,7 +106,7 @@ class ArmProcess:
                     handler(arm, command, response_queue)
 
     def _handle_reset_position(arm: Arm, command: ResetPoseCommand, response_queue: Queue):
-        arm.set_joint_goals(degrees=[0,0,0,0,0], wait=command.wait_for_completion)
+        arm.set_motor_goals(degrees=[0,0,0,0,0], wait=command.wait_for_completion)
         response_queue.put(CommandFinishedResponse())
     
     def _handle_move_end_effector(arm: Arm, command: MoveEndEffectorCommand, response_queue: Queue):
@@ -114,6 +114,9 @@ class ArmProcess:
         position = command.position
         position[2] = max(2e-2, position[2])    #TODO: need to figure out why this value isn't sufficient
 
+        # Get current joint angles
+        motor_radians = arm.read_motor_radians()
+
         # Move arm
-        arm.set_end_effector_target_position(position=position)
+        arm.set_end_effector_target_position(target_position=position, initial_motor_radians=motor_radians)
         response_queue.put(CommandFinishedResponse())

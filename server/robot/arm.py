@@ -81,17 +81,40 @@ class Arm:
     def __del__(self):
         self._disable_torque()
     
-    def set_end_effector_target_position(self, position: np.ndarray):
+    def set_end_effector_target_position(self, target_position: np.ndarray, initial_motor_radians: List[float] | None):
         # Note: joints here are the URDF joints (as opposed to API's notion of joints, which are just
         # the motors)
         motor_id_by_joint_idx = { 2: 1, 3: 2, 5: 3, 6: 4 }
         joint_idx_by_motor_id = { motor_id: joint_idx for joint_idx, motor_id in motor_id_by_joint_idx.items() }
 
         # Target position from meters -> mm (units used in URDF)
-        position_mm = [ position[0] * 1e3, position[1] * 1e3, position[2] * 1e3 ]
+        position_mm = [ target_position[0] * 1e3, target_position[1] * 1e3, target_position[2] * 1e3 ]
+
+        # Motor radians for motor ID=2 need to be inverted
+        initial_motor_radians[1] = -initial_motor_radians[1]
+
+        # Current motor radians to list of joint radians
+        initial_joint_radians = []
+        num_joints = len(self._chain.links)
+        for joint_idx in range(num_joints):
+            motor_id = motor_id_by_joint_idx.get(joint_idx)
+            if motor_id is not None:
+                motor_idx = motor_id - 1
+                initial_joint_radians.append(initial_motor_radians[motor_idx])
+            else:
+                initial_joint_radians.append(0)
 
         # IK
-        joint_radians = self._chain.inverse_kinematics(target_position=position_mm)
+        frame_target = np.eye(4)
+        frame_target[:3, 3] = position_mm
+        joint_radians = self._chain.inverse_kinematics_frame(
+            target=frame_target,
+            initial_position=np.array(initial_joint_radians),
+            orientation_mode=None,
+            no_position=False
+        )
+#        print(joint_radians)
+#        joint_radians = self._chain.inverse_kinematics(target_position=position_mm)
         motor_radians = []
         for motor_id in sorted(joint_idx_by_motor_id.keys()):
             joint_idx = joint_idx_by_motor_id[motor_id]
@@ -106,11 +129,11 @@ class Arm:
         motor_radians.append(0)
 
         # Set position
-        self.set_joint_goals(radians=motor_radians, wait=False)
+        self.set_motor_goals(radians=motor_radians, wait=False)
     
-    def read_joint_values(self, tries: int = 2) -> List[int]:
+    def read_motor_values(self, tries: int = 2) -> List[int]:
         """
-        Reads the joint positions.
+        Reads the motor positions.
         
         Parameters
         ----------
@@ -120,24 +143,28 @@ class Arm:
         Returns
         -------
         List[int]
-            List of joint positions in range [0, 4096]. Center is 2048, 0 and 4096 are 180 degrees
+            List of motor positions in range [0, 4096]. Center is 2048, 0 and 4096 are 180 degrees
             in each direction.
         """
-        result = self.position_reader.txRxPacket()
+        result = self._position_reader.txRxPacket()
         if result != 0:
             if tries > 0:
-                return self._read_joint_positions(tries=tries - 1)
+                return self.read_motor_positions(tries=tries - 1)
             else:
-                print("Error: Failed to read joint positions")
+                print("Error: Failed to read motor positions")
         positions = []
-        for id in self.servo_ids:
+        for id in motor_ids:
             position = self._position_reader.getData(id, ReadAttribute.POSITION.value, 4)
             if position > 2 ** 31:
                 position -= 2 ** 32
             positions.append(position)
         return positions
     
-    def set_joint_goals(self, wait: bool = False, **kwargs):
+    def read_motor_radians(self, tries: int = 2) -> List[float]:
+        joint_values = self.read_motor_values(tries=tries)
+        return [ self._position_to_radians(position) for position in joint_values ]
+    
+    def set_motor_goals(self, wait: bool = False, **kwargs):
         if "radians" in kwargs and "degrees" in kwargs:
             raise TypeError("set_joint_goals(): Both 'radians' and 'degrees' cannot be specified simultaneously")
         positions = []
@@ -147,7 +174,7 @@ class Arm:
             positions = [ self._degrees_to_position(degrees=degrees) for degrees in kwargs["degrees"] ]
         else:
             raise TypeError("set_joint_goals(): Specify either 'radians' or 'degrees' for each joint")
-        self._set_joint_positions(positions=positions)
+        self._set_motor_positions(positions=positions)
         if wait:
             self._wait_until_stopped()
         
@@ -163,9 +190,14 @@ class Arm:
         abs_pos = round(abs(radians) / pi * 2048)
         return 2048 + (abs_pos if radians >= 0 else -abs_pos)
 
-    def _set_joint_positions(self, positions: List[int]):
+    #TODO: test that _position_to_radians(_radians_to_position(rads)) == rads
+    @staticmethod
+    def _position_to_radians(position: int) -> float:
+        return (position - 2048.0) / 2048.0 * pi
+
+    def _set_motor_positions(self, positions: List[int]):
         """
-        Sets joint positions (each [0,4096]).
+        Sets motor positions (each [0,4096]).
 
         Parameters
         ----------
