@@ -5,6 +5,9 @@
 //  Created by Bart Trzynadlowski on 4/16/24.
 //
 
+// +------+                     +----------------+
+// home   lastReleased          lastPressed      current
+// offset = (current-lastPressed) + (lastReleased-home) = current - lastPressed + lastReleased - home = current + (lastReleased - lastPressed) - home
 import Combine
 import RealityKit
 import SwiftUI
@@ -14,13 +17,44 @@ class Teleoperation: ObservableObject {
     private var _subscriptions: [Cancellable] = []
     private var _connection: AsyncTCPConnection?
     private var _lastPose: Matrix4x4 = .identity
-    private var _initialPose: Matrix4x4 = .identity
+    private var _frameOriginPose: Matrix4x4?
+    private var _translationToOriginalFrame: Vector3 = .zero
+    private var _positionLastTransmitted: Vector3 = .zero
 
-    /// Set `true` to transmit poses to robot. Each time this is changed from `false` to `true`,
-    /// the reference pose is reset to the current pose. Pose updates will be relative to it.
+    /// Set `true` to transmit poses to robot.
     var transmitting: Bool = false {
         didSet {
-            _initialPose = _lastPose
+            /*
+             * We need to adjust for jumps in pose when transmission is disabled and then resumed.
+             * Ultimately, we transmit the delta from the home pose (where tracking first started).
+             * We accumulate an offset that erases the jumps. Visualized in 1D:
+             *
+             * +-----.       .------------------.       .--------------------+
+             * home  stop1   start2             stop2   start3               current
+             *
+             *
+             * offset = (current-start3) + (stop2-start2) + (stop1-home)
+             *        = (current-home) + (stop1-start2) + (stop2-start3)
+             *        = (current-home) + translationToHomeFrame
+             *
+             * Each time transmission is stopped and resumed, we accumulate:
+             * stoppedPos - resumedPos
+             */
+            let currentPosition = _lastPose.position
+
+            if transmitting {
+                if _frameOriginPose == nil {
+                    // First press: reset frame origin pose
+                    _frameOriginPose = _lastPose
+                    _translationToOriginalFrame = .zero
+                } else {
+                    // Subsequent press: we have jumped, and need to adjust offset back to original
+                    // frame
+                    _translationToOriginalFrame += _positionLastTransmitted - currentPosition
+                }
+            } else {
+                _positionLastTransmitted = currentPosition
+            }
         }
     }
 
@@ -42,6 +76,15 @@ class Teleoperation: ObservableObject {
         }
     }
 
+    func resetToHomePose() {
+        transmitting = false
+        _frameOriginPose = _lastPose
+        _translationToOriginalFrame = .zero
+        if let frameOriginPose = _frameOriginPose {
+            _connection?.send(PoseUpdateMessage(initialPose: frameOriginPose, pose: _lastPose, deltaPosition: .zero))
+        }
+    }
+
     func subscribeToEvents(from view: ARView) {
         // Subscribe to frame updates
         _subscriptions.append(view.scene.subscribe(to: SceneEvents.Update.self) { [weak self] event in
@@ -52,9 +95,10 @@ class Teleoperation: ObservableObject {
 
     func onUpdate(event: SceneEvents.Update, pose: Matrix4x4) {
         _lastPose = pose
-        if transmitting {
-            let deltaPosition = (pose.position - _initialPose.position) / translationScale
-            _connection?.send(PoseUpdateMessage(initialPose: _initialPose, pose: pose, deltaPosition: deltaPosition))
+        if transmitting,
+           let frameOriginPose = _frameOriginPose {
+            let deltaPosition = (pose.position - frameOriginPose.position + _translationToOriginalFrame) / translationScale
+            _connection?.send(PoseUpdateMessage(initialPose: frameOriginPose, pose: pose, deltaPosition: deltaPosition))
         }
     }
 

@@ -34,21 +34,33 @@ struct ContentView : View {
             }
 
             GeometryReader { geometry in
-                VStack {
-                    Text("Translation Scale")
-                    HStack {
-                        Slider(
-                            value: $_translationScale,
-                            in: 1...2
-                        )
-                        .onChange(of: _translationScale, initial: true) {
-                            teleoperation.translationScale = Float(_translationScale)
+                HStack {
+                    VStack {
+                        Text("Translation Scale")
+                        HStack {
+                            Slider(
+                                value: $_translationScale,
+                                in: 1...2
+                            )
+                            .onChange(of: _translationScale, initial: true) {
+                                teleoperation.translationScale = Float(_translationScale)
+                            }
+                            Text("\(String(format: "%1.1f", _translationScale))")
                         }
-                        Text("\(String(format: "%1.1f", _translationScale))")
+                        Spacer()
                     }
-                    Spacer()
+                    .frame(width: geometry.size.width / 2) // set slider width to half of display width
+
+                    VStack {
+                        Button(action: {
+                            teleoperation.resetToHomePose()
+                        }) {
+                            Label("Home Pose", systemImage: "house.circle")
+                                .font(.title)
+                        }
+                        Spacer()
+                    }
                 }
-                .frame(width: geometry.size.width / 2) // set slider width to half of display width
             }
         }
     }
