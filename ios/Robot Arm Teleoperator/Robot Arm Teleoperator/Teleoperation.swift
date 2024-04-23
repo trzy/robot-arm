@@ -24,6 +24,12 @@ class Teleoperation: ObservableObject {
         }
     }
 
+    var translationScale: Float = 1.0 {
+        didSet {
+            log("Set translation scale: \(translationScale)")
+        }
+    }
+
     init() {
         _task = Task {
             await runTask()
@@ -41,7 +47,7 @@ class Teleoperation: ObservableObject {
     func onUpdate(event: SceneEvents.Update, pose: Matrix4x4) {
         _lastPose = pose
         if transmitting {
-            let deltaPosition = pose.position - _initialPose.position
+            let deltaPosition = (pose.position - _initialPose.position) / translationScale
             _connection?.send(PoseUpdateMessage(initialPose: _initialPose, pose: pose, deltaPosition: deltaPosition))
         }
     }
@@ -49,7 +55,7 @@ class Teleoperation: ObservableObject {
     private func runTask() async {
         while true {
             do {
-                let connection = try await AsyncTCPConnection(host: "10.104.162.241", port: 8000)
+                let connection = try await AsyncTCPConnection(host: "10.104.162.243", port: 8000)
                 _connection = connection
                 connection.send(HelloMessage(message: "Hello from iOS!"))
                 for try await receivedMessage in connection {
