@@ -166,7 +166,11 @@ class Arm:
     def read_motor_radians(self, tries: int = 2) -> List[float]:
         joint_values = self.read_motor_values(tries=tries)
         return [ self._position_to_radians(position) for position in joint_values ]
-    
+
+    def read_motor_degrees(self, tries: int = 2) -> List[float]:
+        joint_values = self.read_motor_values(tries=tries)
+        return [ self._position_to_degrees(position) for position in joint_values ]
+
     def set_motor_goals(self, wait: bool = False, **kwargs):
         if "radians" in kwargs and "degrees" in kwargs:
             raise TypeError("set_motor_goals(): Both 'radians' and 'degrees' cannot be specified simultaneously")
@@ -210,6 +214,10 @@ class Arm:
     @staticmethod
     def _position_to_radians(position: int) -> float:
         return (position - 2048.0) / 2048.0 * pi
+
+    @staticmethod
+    def _position_to_degrees(position: int) -> float:
+        return (position - 2048.0) / 2048.0 * 180.0
 
     def _set_motor_positions(self, positions: List[int]):
         """

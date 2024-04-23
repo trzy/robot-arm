@@ -136,6 +136,8 @@ class ArmProcess:
         response_queue.put(CommandFinishedResponse())
     
     def _handle_open_gripper(arm: Arm, command: OpenGripperCommand, response_queue: Queue):
-        _gripper_open_degrees = min(1, max(0, command.open_amount)) * 90.0
+        closed_degrees = -5.0
+        open_degrees = 90.0
+        _gripper_open_degrees = min(1, max(0, command.open_amount)) * (open_degrees - closed_degrees) + closed_degrees
         arm.set_motor_goal(motor_id=5, degrees=_gripper_open_degrees)
         response_queue.put(CommandFinishedResponse())
