@@ -121,9 +121,12 @@ class ArmProcess:
         response_queue.put(CommandFinishedResponse())
     
     def _handle_move_end_effector(arm: Arm, command: MoveEndEffectorCommand, response_queue: Queue):
-        # Clamp vertical position so we don't hit table
+        # Clamp vertical position so we don't hit table. 
+        # Note: Kinematic chain seems to be set up wrong because 0.0409m is the height of motor 1
+        # axis above origin point. If chain were set up correctly, 0 would be the table surface
+        # position!
         position = command.position
-        position[2] = max(2e-2, position[2])    #TODO: need to figure out why this value isn't sufficient
+        position[2] = max(0.0409, position[2])
 
         # Get current joint angles
         motor_radians = arm.read_motor_radians()
