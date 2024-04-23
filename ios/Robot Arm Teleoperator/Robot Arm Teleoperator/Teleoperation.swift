@@ -30,6 +30,12 @@ class Teleoperation: ObservableObject {
         }
     }
 
+    var gripper: Float = 0.0 {
+        didSet {
+            _connection?.send(GripperMessage(openAmount: gripper))
+        }
+    }
+
     init() {
         _task = Task {
             await runTask()

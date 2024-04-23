@@ -17,9 +17,14 @@ extension View {
     func onTouchUp(completion: @escaping () -> Void) -> some View {
         modifier(OnTouchUpGestureModifier(completion: completion))
     }
+
+    @warn_unqualified_access
+    func onHorizontalDrag(completion: @escaping (Float, Float) -> Void) -> some View {
+        modifier(OnHorizontalDragGestureModifier(completion: completion))
+    }
 }
 
-struct OnTouchDownGestureModifier: ViewModifier {
+fileprivate struct OnTouchDownGestureModifier: ViewModifier {
     @State private var tapped = false
     private let _completion: () -> Void
 
@@ -44,7 +49,7 @@ struct OnTouchDownGestureModifier: ViewModifier {
     }
 }
 
-struct OnTouchUpGestureModifier: ViewModifier {
+fileprivate struct OnTouchUpGestureModifier: ViewModifier {
     @State private var tapped = false
     private let _completion: () -> Void
 
@@ -65,6 +70,36 @@ struct OnTouchUpGestureModifier: ViewModifier {
     }
 
     init(completion: @escaping () -> Void) {
+        _completion = completion
+    }
+}
+
+fileprivate struct OnHorizontalDragGestureModifier: ViewModifier {
+    @State private var touching = false
+    private let _completion: (Float, Float) -> Void
+
+    func body(content: Content) -> some View {
+        GeometryReader { geometry in
+            content
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { value in
+                            if !self.touching {
+                                self.touching = true
+                            }
+                            let width = geometry.size.width
+                            let startPct = Float(value.startLocation.x / width)
+                            let currentPct = Float(value.location.x / width)
+                            self._completion(startPct, currentPct)
+                        }
+                        .onEnded { _ in
+                            self.touching = false
+                        }
+                )
+        }
+    }
+
+    init(completion: @escaping (Float, Float) -> Void) {
         _completion = completion
     }
 }

@@ -14,3 +14,7 @@ struct PoseUpdateMessage: JSONMessage {
     let pose: Matrix4x4
     let deltaPosition: Vector3
 }
+
+struct GripperMessage: JSONMessage {
+    let openAmount: Float
+}

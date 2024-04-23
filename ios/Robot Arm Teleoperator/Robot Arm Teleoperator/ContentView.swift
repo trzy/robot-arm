@@ -25,6 +25,12 @@ struct ContentView : View {
                     .onTouchUp {
                         teleoperation.transmitting = false
                     }
+                    .onHorizontalDrag { startPosition, currentPosition in
+                        // Wherever we started swiping is our 0 position
+                        let distanceToRightEdge = 1.0 - startPosition
+                        let pctToRight = (currentPosition - startPosition) / distanceToRightEdge
+                        teleoperation.gripper = pctToRight
+                    }
             }
 
             GeometryReader { geometry in
