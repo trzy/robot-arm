@@ -81,7 +81,7 @@ class Arm:
     def __del__(self):
         self._disable_torque()
     
-    def set_end_effector_target_position(self, target_position: np.ndarray, initial_motor_radians: List[float] | None):
+    def set_end_effector_target_position(self, target_position: np.ndarray, initial_motor_radians: List[float] | None, gripper_open_degrees: float):
         # Note: joints here are the URDF joints (as opposed to API's notion of joints, which are just
         # the motors)
         motor_id_by_joint_idx = { 2: 1, 3: 2, 5: 3, 6: 4 }
@@ -128,8 +128,8 @@ class Arm:
         # Temporary: gripper rotation fixed to 0
         motor_radians[-1] = 0
 
-        # Temporary: gripper open position to 0
-        motor_radians.append(0)
+        # Gripper open position
+        motor_radians.append(self._degrees_to_position(degrees=gripper_open_degrees))
 
         # Set position
         self.set_motor_goals(radians=motor_radians, wait=False)
@@ -169,15 +169,28 @@ class Arm:
     
     def set_motor_goals(self, wait: bool = False, **kwargs):
         if "radians" in kwargs and "degrees" in kwargs:
-            raise TypeError("set_joint_goals(): Both 'radians' and 'degrees' cannot be specified simultaneously")
+            raise TypeError("set_motor_goals(): Both 'radians' and 'degrees' cannot be specified simultaneously")
         positions = []
         if "radians" in kwargs:
             positions = [ self._radians_to_position(radians=radians) for radians in kwargs["radians"] ]
         elif "degrees" in kwargs:
             positions = [ self._degrees_to_position(degrees=degrees) for degrees in kwargs["degrees"] ]
         else:
-            raise TypeError("set_joint_goals(): Specify either 'radians' or 'degrees' for each joint")
+            raise TypeError("set_motor_goals(): Specify either 'radians' or 'degrees' for each joint")
         self._set_motor_positions(positions=positions)
+        if wait:
+            self._wait_until_stopped()
+    
+    def set_motor_goal(self, motor_id: int, wait: bool = False, **kwargs):
+        if "radians" in kwargs and "degrees" in kwargs:
+            raise TypeError("set_motor_goal(): Both 'radians' and 'degrees' cannot be specified simultaneously")
+        if "radians" in kwargs:
+            position = self._radians_to_position(radians=kwargs["radians"])
+        elif "degrees" in kwargs:
+            position = self._degrees_to_position(degrees=kwargs["degrees"])
+        else:
+            raise TypeError("set_motor_goal(): Specifiy either 'radians' or 'degrees'")
+        self._set_motor_position(motor_id=motor_id, position=position)
         if wait:
             self._wait_until_stopped()
         
@@ -218,6 +231,18 @@ class Arm:
                 DXL_HIBYTE(DXL_HIWORD(positions[i]))
             ]
             self._position_writer.changeParam(motor_id, data_write)
+        self._position_writer.txPacket()
+    
+    def _set_motor_position(self, motor_id: int, position: int):
+        if not self._motor_control_state is Arm.MotorControlType.POSITION_CONTROL:
+            self._set_position_control()
+        data_write = [
+            DXL_LOBYTE(DXL_LOWORD(position)),
+            DXL_HIBYTE(DXL_LOWORD(position)),
+            DXL_LOBYTE(DXL_HIWORD(position)),
+            DXL_HIBYTE(DXL_HIWORD(position))
+        ]
+        self._position_writer.changeParam(motor_id, data_write)
         self._position_writer.txPacket()
 
     def _wait_until_stopped(self, timeout_seconds: float = 1):

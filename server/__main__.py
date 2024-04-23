@@ -32,6 +32,9 @@ class PoseUpdateMessage(BaseModel):
     pose: Annotated[List[float], Len(min_length=16, max_length=16)]
     deltaPosition: Annotated[List[float], Len(min_length=3, max_length=3)]
 
+class GripperMessage(BaseModel):
+    openAmount: float
+
 
 ####################################################################################################
 # Server
@@ -76,6 +79,11 @@ class RobotArmServer(MessageHandler):
         if not self._arm_process.is_busy():
             position = self._position + delta_position
             self._arm_process.move_end_effector(position=position)
+    
+    @handler(GripperMessage)
+    async def handle_GripperMessage(self, session: Session, msg: GripperMessage, timestamp: float):
+        if not self._arm_process.is_busy():
+            self._arm_process.set_gripper_open_amount(open_amount=msg.openAmount)
 
 
 ####################################################################################################
