@@ -15,6 +15,10 @@ struct PoseUpdateMessage: JSONMessage {
     let deltaPosition: Vector3
 }
 
-struct GripperMessage: JSONMessage {
+struct GripperOpenMessage: JSONMessage {
     let openAmount: Float
+}
+
+struct GripperRotateMessage: JSONMessage {
+    let degrees: Float
 }

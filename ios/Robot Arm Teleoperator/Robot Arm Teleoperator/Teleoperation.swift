@@ -64,9 +64,15 @@ class Teleoperation: ObservableObject {
         }
     }
 
-    var gripper: Float = 0.0 {
+    var gripperOpen: Float = 0.0 {
         didSet {
-            _connection?.send(GripperMessage(openAmount: gripper))
+            _connection?.send(GripperOpenMessage(openAmount: gripperOpen))
+        }
+    }
+
+    var gripperRotation: Float = 0.0 {
+        didSet {
+            _connection?.send(GripperRotateMessage(degrees: gripperRotation))
         }
     }
 
@@ -82,6 +88,8 @@ class Teleoperation: ObservableObject {
         _translationToOriginalFrame = .zero
         if let frameOriginPose = _frameOriginPose {
             _connection?.send(PoseUpdateMessage(initialPose: frameOriginPose, pose: _lastPose, deltaPosition: .zero))
+            _connection?.send(GripperOpenMessage(openAmount: 0))
+            _connection?.send(GripperRotateMessage(degrees: 0))
         }
     }
 
