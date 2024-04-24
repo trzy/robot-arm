@@ -5,9 +5,6 @@
 //  Created by Bart Trzynadlowski on 4/16/24.
 //
 
-// +------+                     +----------------+
-// home   lastReleased          lastPressed      current
-// offset = (current-lastPressed) + (lastReleased-home) = current - lastPressed + lastReleased - home = current + (lastReleased - lastPressed) - home
 import Combine
 import RealityKit
 import SwiftUI
