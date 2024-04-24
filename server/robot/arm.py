@@ -28,6 +28,7 @@ class Arm:
         
     def __init__(self, port: str):
         self._chain = Chain.from_urdf_file(urdf_file=urdf_filepath, active_links_mask=[ False, False, True, True, False, True, True, False ])
+        self._prev_joint_radians = None
     
         config = Dynamixel.Config(
             baudrate=57600,
@@ -104,19 +105,25 @@ class Arm:
             else:
                 initial_joint_radians.append(0)
 
-        # IK w/ initial position
-        # frame_target = np.eye(4)
-        # frame_target[:3, 3] = position_mm
-        # joint_radians = self._chain.inverse_kinematics_frame(
-        #     target=frame_target,
-        #     initial_position=np.array(initial_joint_radians),
-        #     orientation_mode=None,
-        #     no_position=False
-        # )
-
-        # IK from rest pose
-        joint_radians = self._chain.inverse_kinematics(target_position=position_mm)
-
+        # IK
+        t0 = time.perf_counter()
+        joint_radians = []
+        if self._prev_joint_radians is None:
+            # No previous joint values, run solver from rest pose
+            joint_radians = self._chain.inverse_kinematics(target_position=position_mm)
+        else:
+            # IK from previous position
+            frame_target = np.eye(4)
+            frame_target[:3, 3] = position_mm
+            joint_radians = self._chain.inverse_kinematics_frame(
+                target=frame_target,
+                initial_position=self._prev_joint_radians,
+                orientation_mode=None,
+                no_position=False
+            )
+        self._prev_joint_radians = joint_radians.copy()
+        t1 = time.perf_counter()
+       
         # Get target motor angles
         motor_radians = []
         for motor_id in sorted(joint_idx_by_motor_id.keys()):
