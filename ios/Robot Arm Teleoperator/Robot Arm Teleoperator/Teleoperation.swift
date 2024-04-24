@@ -19,7 +19,7 @@ class Teleoperation: ObservableObject {
     private var _positionLastTransmitted: Vector3 = .zero
 
     /// Set `true` to transmit poses to robot.
-    var transmitting: Bool = false {
+    @Published var transmitting: Bool = false {
         didSet {
             /*
              * We need to adjust for jumps in pose when transmission is disabled and then resumed.

@@ -19,12 +19,6 @@ struct ContentView : View {
             VStack {
                 ARViewContainer(teleoperation: teleoperation)
                     .edgesIgnoringSafeArea(.all)
-                    .onTouchDown {
-                        teleoperation.transmitting = true
-                    }
-                    .onTouchUp {
-                        teleoperation.transmitting = false
-                    }
             }
 
             GeometryReader { geometry in
@@ -62,13 +56,7 @@ struct ContentView : View {
                     // Gripper control regions
                     ZStack {
                         Rectangle()
-                            .fill(.red.opacity(0.5))
-                            .onTouchDown {
-                                teleoperation.transmitting = true
-                            }
-                            .onTouchUp {
-                                teleoperation.transmitting = false
-                            }
+                            .fill(.purple.opacity(0.5))
                             .onHorizontalDrag { startPosition, currentPosition in
                                 // Wherever we started swiping is our 0 position and left/right controls
                                 // direction
@@ -79,18 +67,12 @@ struct ContentView : View {
                                 teleoperation.gripperRotation = degrees
                             }
                         Text("Gripper Rotation")
-                            .foregroundStyle(.red)
+                            .foregroundStyle(.purple)
                     }
 
                     ZStack {
                         Rectangle()
                             .fill(.blue.opacity(0.5))
-                            .onTouchDown {
-                                teleoperation.transmitting = true
-                            }
-                            .onTouchUp {
-                                teleoperation.transmitting = false
-                            }
                             .onHorizontalDrag { startPosition, currentPosition in
                                 // Where we started swiping is our 0 position and only up will open gripper
                                 let distanceToRightEdge = 1.0 - startPosition
@@ -99,6 +81,15 @@ struct ContentView : View {
                             }
                         Text("Gripper Open")
                             .foregroundStyle(.red)
+                    }
+
+                    ZStack {
+                        Rectangle()
+                            .fill((teleoperation.transmitting ? Color.red : Color.green).opacity(0.5))
+                            .onTouchDown {
+                                teleoperation.transmitting = !teleoperation.transmitting
+                            }
+                        Text(teleoperation.transmitting ? "Stop Teleoperation" : "Start Teleoperation")
                     }
                 }
             }
