@@ -13,6 +13,7 @@ class Teleoperation: ObservableObject {
     private var _task: Task<Void, Never>!
     private var _subscriptions: [Cancellable] = []
     private var _connection: AsyncTCPConnection?
+    private var _poseLastTransmittedAt: TimeInterval = 0
     private var _lastPose: Matrix4x4 = .identity
     private var _frameOriginPose: Matrix4x4?
     private var _translationToOriginalFrame: Vector3 = .zero
@@ -99,6 +100,14 @@ class Teleoperation: ObservableObject {
     }
 
     func onUpdate(event: SceneEvents.Update, pose: Matrix4x4) {
+        // Throttle transmission rate. We are using TCP and both the IK solver and actual motor
+        // servos take time to respond. No need to spam the connection.
+        let transmissionHz = 10.0
+        let period = 1.0 / transmissionHz
+        let timeSinceLastTransmission = Date().timeIntervalSinceReferenceDate - _poseLastTransmittedAt
+        guard timeSinceLastTransmission >= period else { return }
+
+        // Transmit pose
         _lastPose = pose
         if transmitting,
            let frameOriginPose = _frameOriginPose {
