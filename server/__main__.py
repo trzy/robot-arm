@@ -32,8 +32,11 @@ class PoseUpdateMessage(BaseModel):
     pose: Annotated[List[float], Len(min_length=16, max_length=16)]
     deltaPosition: Annotated[List[float], Len(min_length=3, max_length=3)]
 
-class GripperMessage(BaseModel):
+class GripperOpenMessage(BaseModel):
     openAmount: float
+
+class GripperRotateMessage(BaseModel):
+    degrees: float
 
 
 ####################################################################################################
@@ -50,6 +53,8 @@ class RobotArmServer(MessageHandler):
         self._arm_process = arm_process
         self._position = np.array([ 0, 5*2.54*1e-2, 9*2.54*1e-2 ])  # pretty close to 0 position
         arm_process.move_end_effector(position=self._position)
+        arm_process.set_gripper_open_amount(open_amount=0)
+        arm_process.set_gripper_rotate_amount(rotate_degrees=0)
     
     async def run(self):
         await self._server.run()
@@ -80,10 +85,15 @@ class RobotArmServer(MessageHandler):
             position = self._position + delta_position
             self._arm_process.move_end_effector(position=position)
     
-    @handler(GripperMessage)
-    async def handle_GripperMessage(self, session: Session, msg: GripperMessage, timestamp: float):
+    @handler(GripperOpenMessage)
+    async def handle_GripperOpenMessage(self, session: Session, msg: GripperOpenMessage, timestamp: float):
         if not self._arm_process.is_busy():
             self._arm_process.set_gripper_open_amount(open_amount=msg.openAmount)
+    
+    @handler(GripperRotateMessage)
+    async def handle_GripperRotateMessage(self, session: Session, msg: GripperRotateMessage, timestamp: float):
+        if not self._arm_process.is_busy():
+            self._arm_process.set_gripper_rotate_amount(rotate_degrees=msg.degrees)
 
 
 ####################################################################################################

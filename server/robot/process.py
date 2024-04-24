@@ -37,6 +37,10 @@ class OpenGripperCommand:
     open_amount: float
 
 @dataclass
+class RotateGripperCommand:
+    rotate_degrees: float
+
+@dataclass
 class TerminateProcessCommand:
     pass
 
@@ -46,6 +50,7 @@ class TerminateProcessCommand:
 ####################################################################################################
 
 _gripper_open_degrees: float = 0
+_gripper_rotate_degrees: float = 0
 
 @dataclass
 class CommandFinishedResponse:
@@ -93,6 +98,10 @@ class ArmProcess:
     def set_gripper_open_amount(self, open_amount: float):
         self._command_queue.put(OpenGripperCommand(open_amount=open_amount))
         self._num_commands_in_progress += 1
+    
+    def set_gripper_rotate_amount(self, rotate_degrees: float):
+        self._command_queue.put(RotateGripperCommand(rotate_degrees=rotate_degrees))
+        self._num_commands_in_progress += 1
 
     def _try_get_response(self) -> CommandFinishedResponse | None:
         try:
@@ -105,7 +114,8 @@ class ArmProcess:
         handler_by_command: Dict[Type, Callable] = {
             ResetPoseCommand: ArmProcess._handle_reset_position,
             MoveEndEffectorCommand: ArmProcess._handle_move_end_effector,
-            OpenGripperCommand: ArmProcess._handle_open_gripper
+            OpenGripperCommand: ArmProcess._handle_open_gripper,
+            RotateGripperCommand: ArmProcess._handle_rotate_gripper
         }
         while True:
             command = command_queue.get()
@@ -132,7 +142,7 @@ class ArmProcess:
         motor_radians = arm.read_motor_radians()
 
         # Move arm
-        arm.set_end_effector_target_position(target_position=position, initial_motor_radians=motor_radians, gripper_open_degrees=_gripper_open_degrees)
+        arm.set_end_effector_target_position(target_position=position, initial_motor_radians=motor_radians, gripper_open_degrees=_gripper_open_degrees, gripper_rotate_degrees=_gripper_rotate_degrees)
         response_queue.put(CommandFinishedResponse())
     
     def _handle_open_gripper(arm: Arm, command: OpenGripperCommand, response_queue: Queue):
@@ -140,4 +150,9 @@ class ArmProcess:
         open_degrees = 90.0
         _gripper_open_degrees = min(1, max(0, command.open_amount)) * (open_degrees - closed_degrees) + closed_degrees
         arm.set_motor_goal(motor_id=5, degrees=_gripper_open_degrees)
+        response_queue.put(CommandFinishedResponse())
+    
+    def _handle_rotate_gripper(arm: Arm, command: RotateGripperCommand, response_queue: Queue):
+        _gripper_rotate_degrees = min(90.0, max(-90.0, command.rotate_degrees))
+        arm.set_motor_goal(motor_id=4, degrees=_gripper_rotate_degrees)
         response_queue.put(CommandFinishedResponse())
