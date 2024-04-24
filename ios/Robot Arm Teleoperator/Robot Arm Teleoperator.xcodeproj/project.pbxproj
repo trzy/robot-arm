@@ -23,6 +23,8 @@
 		CC08940A2BCF3E6000D82209 /* Teleoperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0894092BCF3E6000D82209 /* Teleoperation.swift */; };
 		CC08940C2BCF3EF000D82209 /* Messages.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC08940B2BCF3EF000D82209 /* Messages.swift */; };
 		CC4510462BD06F390008AFE1 /* OnTouch.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC4510452BD06F390008AFE1 /* OnTouch.swift */; };
+		CC59A6D82BD9A7FC00BA5B57 /* NonReactiveState.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC59A6D72BD9A7FC00BA5B57 /* NonReactiveState.swift */; };
+		CC59A6DA2BD9AA3200BA5B57 /* Clamp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC59A6D92BD9AA3200BA5B57 /* Clamp.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -62,6 +64,8 @@
 		CC0894092BCF3E6000D82209 /* Teleoperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Teleoperation.swift; sourceTree = "<group>"; };
 		CC08940B2BCF3EF000D82209 /* Messages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Messages.swift; sourceTree = "<group>"; };
 		CC4510452BD06F390008AFE1 /* OnTouch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnTouch.swift; sourceTree = "<group>"; };
+		CC59A6D72BD9A7FC00BA5B57 /* NonReactiveState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NonReactiveState.swift; sourceTree = "<group>"; };
+		CC59A6D92BD9AA3200BA5B57 /* Clamp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Clamp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -166,6 +170,7 @@
 				CC0894012BCF3A6100D82209 /* simd_float3+Extensions.swift */,
 				CC0894022BCF3A6100D82209 /* simd_float4x4+Extensions.swift */,
 				CC0894042BCF3A6100D82209 /* simd_quatf+Extensions.swift */,
+				CC59A6D92BD9AA3200BA5B57 /* Clamp.swift */,
 			);
 			path = Util;
 			sourceTree = "<group>";
@@ -174,6 +179,7 @@
 			isa = PBXGroup;
 			children = (
 				CC4510452BD06F390008AFE1 /* OnTouch.swift */,
+				CC59A6D72BD9A7FC00BA5B57 /* NonReactiveState.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -316,7 +322,9 @@
 				CC0893FE2BCF39E300D82209 /* AsyncTCPConnection.swift in Sources */,
 				CC0893D22BCF399B00D82209 /* AppDelegate.swift in Sources */,
 				CC0894062BCF3A6100D82209 /* simd_float4x4+Extensions.swift in Sources */,
+				CC59A6D82BD9A7FC00BA5B57 /* NonReactiveState.swift in Sources */,
 				CC08940C2BCF3EF000D82209 /* Messages.swift in Sources */,
+				CC59A6DA2BD9AA3200BA5B57 /* Clamp.swift in Sources */,
 				CC0894082BCF3A6100D82209 /* simd_quatf+Extensions.swift in Sources */,
 				CC0893FF2BCF39E300D82209 /* JSONMessage.swift in Sources */,
 			);

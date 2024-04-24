@@ -13,6 +13,8 @@ struct ContentView : View {
     @StateObject var teleoperation = Teleoperation()
 
     @State private var _translationScale = 1.2
+    @State private var _initialGripperRotationValue = NonReactiveState<Float>(wrappedValue: 0)
+    @State private var _initialGripperOpenValue = NonReactiveState<Float>(wrappedValue: 0)
 
     var body: some View {
         ZStack {
@@ -57,14 +59,15 @@ struct ContentView : View {
                     ZStack {
                         Rectangle()
                             .fill(.purple.opacity(0.5))
-                            .onHorizontalDrag { startPosition, currentPosition in
-                                // Wherever we started swiping is our 0 position and left/right controls
-                                // direction
-                                let distanceToRightEdge = 1.0 - startPosition
-                                let distanceToLeftEdge = startPosition - 0.0
-                                let delta = currentPosition - startPosition
-                                let degrees = 90.0 * (max(0, delta / distanceToRightEdge) + min(delta / distanceToLeftEdge, 0))
-                                teleoperation.gripperRotation = degrees
+                            .onHorizontalDrag { started, startPosition, currentPosition in
+                                // Incrementally rotate the gripper based on graction of view width
+                                // swiped
+                                if started {
+                                    _initialGripperRotationValue.wrappedValue = teleoperation.gripperRotation
+                                } else {
+                                    let delta = 90 * (currentPosition - startPosition)
+                                    teleoperation.gripperRotation = clamp(_initialGripperRotationValue.wrappedValue + delta, min: -90, max: 90)
+                                }
                             }
                         Text("Gripper Rotation")
                             .foregroundStyle(.purple)
@@ -73,11 +76,15 @@ struct ContentView : View {
                     ZStack {
                         Rectangle()
                             .fill(.blue.opacity(0.5))
-                            .onHorizontalDrag { startPosition, currentPosition in
-                                // Where we started swiping is our 0 position and only up will open gripper
-                                let distanceToRightEdge = 1.0 - startPosition
-                                let pctToRight = (currentPosition - startPosition) / distanceToRightEdge
-                                teleoperation.gripperOpen = pctToRight
+                            .onHorizontalDrag { started, startPosition, currentPosition in
+                                // Incrementally move the gripper based on fraction of view width
+                                // swiped
+                                if started {
+                                    _initialGripperOpenValue.wrappedValue = teleoperation.gripperOpen
+                                } else {
+                                    let delta = currentPosition - startPosition
+                                    teleoperation.gripperOpen = clamp(_initialGripperOpenValue.wrappedValue + delta, min: 0, max: 1)
+                                }
                             }
                         Text("Gripper Open")
                             .foregroundStyle(.red)

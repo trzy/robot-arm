@@ -19,12 +19,12 @@ extension View {
     }
 
     @warn_unqualified_access
-    func onHorizontalDrag(completion: @escaping (Float, Float) -> Void) -> some View {
+    func onHorizontalDrag(completion: @escaping (Bool, Float, Float) -> Void) -> some View {
         modifier(OnHorizontalDragGestureModifier(completion: completion))
     }
 
     @warn_unqualified_access
-    func onVerticalDrag(completion: @escaping (Float, Float) -> Void) -> some View {
+    func onVerticalDrag(completion: @escaping (Bool, Float, Float) -> Void) -> some View {
         modifier(OnVerticalDragGestureModifier(completion: completion))
     }
 }
@@ -81,7 +81,7 @@ fileprivate struct OnTouchUpGestureModifier: ViewModifier {
 
 fileprivate struct OnHorizontalDragGestureModifier: ViewModifier {
     @State private var touching = false
-    private let _completion: (Float, Float) -> Void
+    private let _completion: (Bool, Float, Float) -> Void
 
     func body(content: Content) -> some View {
         GeometryReader { geometry in
@@ -89,13 +89,15 @@ fileprivate struct OnHorizontalDragGestureModifier: ViewModifier {
                 .simultaneousGesture(
                     DragGesture(minimumDistance: 0)
                         .onChanged { value in
+                            var startedThisFrame = false
                             if !self.touching {
                                 self.touching = true
+                                startedThisFrame = true
                             }
                             let width = geometry.size.width
                             let startPct = Float(value.startLocation.x / width)
                             let currentPct = Float(value.location.x / width)
-                            self._completion(startPct, currentPct)
+                            self._completion(startedThisFrame, startPct, currentPct)
                         }
                         .onEnded { _ in
                             self.touching = false
@@ -104,14 +106,14 @@ fileprivate struct OnHorizontalDragGestureModifier: ViewModifier {
         }
     }
 
-    init(completion: @escaping (Float, Float) -> Void) {
+    init(completion: @escaping (Bool, Float, Float) -> Void) {
         _completion = completion
     }
 }
 
 fileprivate struct OnVerticalDragGestureModifier: ViewModifier {
     @State private var touching = false
-    private let _completion: (Float, Float) -> Void
+    private let _completion: (Bool, Float, Float) -> Void
 
     func body(content: Content) -> some View {
         GeometryReader { geometry in
@@ -119,13 +121,15 @@ fileprivate struct OnVerticalDragGestureModifier: ViewModifier {
                 .simultaneousGesture(
                     DragGesture(minimumDistance: 0)
                         .onChanged { value in
+                            var startedThisFrame = false
                             if !self.touching {
                                 self.touching = true
+                                startedThisFrame = true
                             }
                             let height = geometry.size.height
                             let startPct = Float(value.startLocation.y / height)
                             let currentPct = Float(value.location.y / height)
-                            self._completion(startPct, currentPct)
+                            self._completion(startedThisFrame, startPct, currentPct)
                         }
                         .onEnded { _ in
                             self.touching = false
@@ -134,7 +138,7 @@ fileprivate struct OnVerticalDragGestureModifier: ViewModifier {
         }
     }
 
-    init(completion: @escaping (Float, Float) -> Void) {
+    init(completion: @escaping (Bool, Float, Float) -> Void) {
         _completion = completion
     }
 }
