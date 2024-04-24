@@ -152,7 +152,7 @@ class Arm:
         result = self._position_reader.txRxPacket()
         if result != 0:
             if tries > 0:
-                return self.read_motor_positions(tries=tries - 1)
+                return self.read_motor_values(tries=tries - 1)
             else:
                 print("Error: Failed to read motor positions")
         positions = []
