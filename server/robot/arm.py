@@ -133,10 +133,10 @@ class Arm:
         motor_radians[1] = -motor_radians[1]    # need this correction for motor ID=2
 
         # Gripper rotation
-        motor_radians[-1] = self._degrees_to_position(degrees=gripper_rotate_degrees)
+        motor_radians[-1] = gripper_rotate_degrees * pi / 180.0
 
         # Gripper open position
-        motor_radians.append(self._degrees_to_position(degrees=gripper_open_degrees))
+        motor_radians.append(gripper_open_degrees * pi / 180.0)
 
         # Set position
         self.set_motor_goals(radians=motor_radians, wait=False)

@@ -28,17 +28,10 @@ class ResetPoseCommand:
     wait_for_completion: bool = False
 
 @dataclass
-class MoveEndEffectorCommand:
+class MoveArmCommand:
     position: np.ndarray
-    wait_for_completion: bool = False
-
-@dataclass
-class OpenGripperCommand:
-    open_amount: float
-
-@dataclass
-class RotateGripperCommand:
-    rotate_degrees: float
+    gripper_open_amount: float
+    gripper_rotate_degrees: float
 
 @dataclass
 class TerminateProcessCommand:
@@ -91,17 +84,8 @@ class ArmProcess:
         self._command_queue.put(ResetPoseCommand(wait_for_completion=wait_for_completion))
         self._num_commands_in_progress += 1
     
-    def move_end_effector(self, position: np.ndarray, wait_for_completion: bool = False):
-        self._command_queue.put(MoveEndEffectorCommand(position=position, wait_for_completion=wait_for_completion))
-        self._num_commands_in_progress += 1
-
-    def set_gripper_open_amount(self, open_amount: float):
-        self._command_queue.put(OpenGripperCommand(open_amount=open_amount))
-        self._num_commands_in_progress += 1
-    
-    def set_gripper_rotate_amount(self, rotate_degrees: float):
-        self._command_queue.put(RotateGripperCommand(rotate_degrees=rotate_degrees))
-        self._num_commands_in_progress += 1
+    def move_arm(self, position: np.ndarray, gripper_open_amount: float, gripper_rotate_degrees: float):
+        self._command_queue.put(MoveArmCommand(position=position, gripper_open_amount=gripper_open_amount, gripper_rotate_degrees=gripper_rotate_degrees))
 
     def _try_get_response(self) -> CommandFinishedResponse | None:
         try:
@@ -113,9 +97,7 @@ class ArmProcess:
         arm = Arm(port=serial_port)
         handler_by_command: Dict[Type, Callable] = {
             ResetPoseCommand: ArmProcess._handle_reset_position,
-            MoveEndEffectorCommand: ArmProcess._handle_move_end_effector,
-            OpenGripperCommand: ArmProcess._handle_open_gripper,
-            RotateGripperCommand: ArmProcess._handle_rotate_gripper
+            MoveArmCommand: ArmProcess._handle_move_arm
         }
         while True:
             command = command_queue.get()
@@ -130,7 +112,7 @@ class ArmProcess:
         arm.set_motor_goals(degrees=[0,0,0,0,0], wait=command.wait_for_completion)
         response_queue.put(CommandFinishedResponse())
     
-    def _handle_move_end_effector(arm: Arm, command: MoveEndEffectorCommand, response_queue: Queue):
+    def _handle_move_arm(arm: Arm, command: MoveArmCommand, response_queue: Queue):
         # Clamp vertical position so we don't hit table. 
         # Note: Kinematic chain seems to be set up wrong because 0.0409m is the height of motor 1
         # axis above origin point. If chain were set up correctly, 0 would be the table surface
@@ -141,18 +123,14 @@ class ArmProcess:
         # Get current joint angles
         motor_radians = arm.read_motor_radians()
 
-        # Move arm
-        arm.set_end_effector_target_position(target_position=position, initial_motor_radians=motor_radians, gripper_open_degrees=_gripper_open_degrees, gripper_rotate_degrees=_gripper_rotate_degrees)
-        response_queue.put(CommandFinishedResponse())
-    
-    def _handle_open_gripper(arm: Arm, command: OpenGripperCommand, response_queue: Queue):
+        # Gripper open amount
         closed_degrees = -5.0
         open_degrees = 90.0
-        _gripper_open_degrees = min(1, max(0, command.open_amount)) * (open_degrees - closed_degrees) + closed_degrees
-        arm.set_motor_goal(motor_id=5, degrees=_gripper_open_degrees)
-        response_queue.put(CommandFinishedResponse())
-    
-    def _handle_rotate_gripper(arm: Arm, command: RotateGripperCommand, response_queue: Queue):
-        _gripper_rotate_degrees = min(90.0, max(-90.0, command.rotate_degrees))
-        arm.set_motor_goal(motor_id=4, degrees=_gripper_rotate_degrees)
+        _gripper_open_degrees = min(1, max(0, command.gripper_open_amount)) * (open_degrees - closed_degrees) + closed_degrees
+
+        # Gripper rotation
+        _gripper_rotate_degrees = min(90.0, max(-90.0, command.gripper_rotate_degrees))
+
+        # Apply to arm
+        arm.set_end_effector_target_position(target_position=position, initial_motor_radians=motor_radians, gripper_open_degrees=_gripper_open_degrees, gripper_rotate_degrees=_gripper_rotate_degrees)
         response_queue.put(CommandFinishedResponse())

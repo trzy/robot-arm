@@ -27,16 +27,10 @@ from .robot import serial_ports, find_serial_port, ArmProcess
 class HelloMessage(BaseModel):
     message: str
 
-class PoseUpdateMessage(BaseModel):
-    initialPose: Annotated[List[float], Len(min_length=16, max_length=16)]
-    pose: Annotated[List[float], Len(min_length=16, max_length=16)]
-    deltaPosition: Annotated[List[float], Len(min_length=3, max_length=3)]
-
-class GripperOpenMessage(BaseModel):
-    openAmount: float
-
-class GripperRotateMessage(BaseModel):
-    degrees: float
+class PoseStateMessage(BaseModel):
+    gripperDeltaPosition: Annotated[List[float], Len(min_length=3, max_length=3)]
+    gripperOpenAmount: float
+    gripperRotateDegrees: float
 
 
 ####################################################################################################
@@ -52,9 +46,7 @@ class RobotArmServer(MessageHandler):
         self._server = Server(port=port, message_handler=self)
         self._arm_process = arm_process
         self._position = np.array([ 0, 5*2.54*1e-2, 9*2.54*1e-2 ])  # pretty close to 0 position
-        arm_process.move_end_effector(position=self._position)
-        arm_process.set_gripper_open_amount(open_amount=0)
-        arm_process.set_gripper_rotate_amount(rotate_degrees=0)
+        arm_process.move_arm(position=self._position, gripper_open_amount=0, gripper_rotate_degrees=0)
     
     async def run(self):
         await self._server.run()
@@ -72,29 +64,18 @@ class RobotArmServer(MessageHandler):
     async def handle_HelloMessage(self, session: Session, msg: HelloMessage, timestamp: float):
         print("Hello received: %s" % msg.message)
     
-    @handler(PoseUpdateMessage)
-    async def handle_PoseUpdateMessage(self, session: Session, msg: PoseUpdateMessage, timestamp: float):
+    @handler(PoseStateMessage)
+    async def handle_PoseStateMessage(self, session: Session, msg: PoseStateMessage, timestamp: float):
         # Convert (x,y,z) from ARKit -> (x,z,y) in robot frame
-        x = msg.deltaPosition[0]    # robot X axis is to the right
-        y = -msg.deltaPosition[2]   # robot Y axis is in front
-        z = msg.deltaPosition[1]    # robot Z axis is up
+        x = msg.gripperDeltaPosition[0]    # robot X axis is to the right
+        y = -msg.gripperDeltaPosition[2]   # robot Y axis is in front
+        z = msg.gripperDeltaPosition[1]    # robot Z axis is up
         delta_position = np.array([ x, y, z ])
 
         # Move arm if it is not busy
         if not self._arm_process.is_busy():
             position = self._position + delta_position
-            self._arm_process.move_end_effector(position=position)
-    
-    @handler(GripperOpenMessage)
-    async def handle_GripperOpenMessage(self, session: Session, msg: GripperOpenMessage, timestamp: float):
-        if not self._arm_process.is_busy():
-            self._arm_process.set_gripper_open_amount(open_amount=msg.openAmount)
-    
-    @handler(GripperRotateMessage)
-    async def handle_GripperRotateMessage(self, session: Session, msg: GripperRotateMessage, timestamp: float):
-        if not self._arm_process.is_busy():
-            self._arm_process.set_gripper_rotate_amount(rotate_degrees=msg.degrees)
-
+            self._arm_process.move_arm(position=position, gripper_open_amount=msg.gripperOpenAmount, gripper_rotate_degrees=msg.gripperRotateDegrees)
 
 ####################################################################################################
 # Program Entry Point
