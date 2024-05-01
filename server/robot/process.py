@@ -42,9 +42,6 @@ class TerminateProcessCommand:
 # Sub-Process Public API
 ####################################################################################################
 
-_gripper_open_degrees: float = 0
-_gripper_rotate_degrees: float = 0
-
 @dataclass
 class CommandFinishedResponse:
     error: str | None = None
@@ -126,11 +123,11 @@ class ArmProcess:
         # Gripper open amount
         closed_degrees = -5.0
         open_degrees = 90.0
-        _gripper_open_degrees = min(1, max(0, command.gripper_open_amount)) * (open_degrees - closed_degrees) + closed_degrees
+        gripper_open_degrees = min(1, max(0, command.gripper_open_amount)) * (open_degrees - closed_degrees) + closed_degrees
 
         # Gripper rotation
-        _gripper_rotate_degrees = min(90.0, max(-90.0, command.gripper_rotate_degrees))
+        gripper_rotate_degrees = min(90.0, max(-90.0, command.gripper_rotate_degrees))
 
         # Apply to arm
-        arm.set_end_effector_target_position(target_position=position, initial_motor_radians=motor_radians, gripper_open_degrees=_gripper_open_degrees, gripper_rotate_degrees=_gripper_rotate_degrees)
+        arm.set_end_effector_target_position(target_position=position, initial_motor_radians=motor_radians, gripper_open_degrees=gripper_open_degrees, gripper_rotate_degrees=gripper_rotate_degrees)
         response_queue.put(CommandFinishedResponse())
