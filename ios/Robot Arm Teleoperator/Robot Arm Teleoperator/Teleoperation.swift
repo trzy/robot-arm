@@ -15,12 +15,13 @@ class Teleoperation: ObservableObject {
     private var _connection: AsyncTCPConnection?
     private var _poseLastTransmittedAt: TimeInterval = 0
     private var _lastPose: Matrix4x4 = .identity
+    private var _lastTransmittedPose: Matrix4x4 = .identity
     private var _frameOriginPose: Matrix4x4?
     private var _translationToOriginalFrame: Vector3 = .zero
     private var _positionLastTransmitted: Vector3 = .zero
 
     /// Set `true` to transmit poses to robot.
-    @Published var transmitting: Bool = false {
+    @Published var moving: Bool = false {
         didSet {
             /*
              * We need to adjust for jumps in pose when transmission is disabled and then resumed.
@@ -40,7 +41,7 @@ class Teleoperation: ObservableObject {
              */
             let currentPosition = _lastPose.position
 
-            if transmitting {
+            if moving {
                 if _frameOriginPose == nil {
                     // First press: reset frame origin pose
                     _frameOriginPose = _lastPose
@@ -62,17 +63,8 @@ class Teleoperation: ObservableObject {
         }
     }
 
-    var gripperOpen: Float = 0.0 {
-        didSet {
-            _connection?.send(GripperOpenMessage(openAmount: gripperOpen))
-        }
-    }
-
-    var gripperRotation: Float = 0.0 {
-        didSet {
-            _connection?.send(GripperRotateMessage(degrees: gripperRotation))
-        }
-    }
+    var gripperOpen: Float = 0.0
+    var gripperRotation: Float = 0.0
 
     init() {
         _task = Task {
@@ -81,13 +73,11 @@ class Teleoperation: ObservableObject {
     }
 
     func resetToHomePose() {
-        transmitting = false
+        moving = false
         _frameOriginPose = _lastPose
         _translationToOriginalFrame = .zero
-        if let frameOriginPose = _frameOriginPose {
-            _connection?.send(PoseUpdateMessage(initialPose: frameOriginPose, pose: _lastPose, deltaPosition: .zero))
-            _connection?.send(GripperOpenMessage(openAmount: 0))
-            _connection?.send(GripperRotateMessage(degrees: 0))
+        if _frameOriginPose != nil {
+            _connection?.send(PoseStateMessage(gripperDeltaPosition: .zero, gripperOpenAmount: 0, gripperRotateDegrees: 0))
         }
     }
 
@@ -102,24 +92,30 @@ class Teleoperation: ObservableObject {
     func onUpdate(event: SceneEvents.Update, pose: Matrix4x4) {
         // Throttle transmission rate. We are using TCP and both the IK solver and actual motor
         // servos take time to respond. No need to spam the connection.
-        let transmissionHz = 10.0
+        let transmissionHz = 20.0
         let period = 1.0 / transmissionHz
-        let timeSinceLastTransmission = Date().timeIntervalSinceReferenceDate - _poseLastTransmittedAt
+        let now = Date().timeIntervalSinceReferenceDate
+        let timeSinceLastTransmission = now - _poseLastTransmittedAt
         guard timeSinceLastTransmission >= period else { return }
 
-        // Transmit pose
+        // Transmit update
         _lastPose = pose
-        if transmitting,
-           let frameOriginPose = _frameOriginPose {
-            let deltaPosition = (pose.position - frameOriginPose.position + _translationToOriginalFrame) / translationScale
-            _connection?.send(PoseUpdateMessage(initialPose: frameOriginPose, pose: pose, deltaPosition: deltaPosition))
+        let currentPose = moving ? pose : _lastTransmittedPose    // when not moving, keep transmitting old pose (and always update gripper)
+        if let frameOriginPose = _frameOriginPose {
+            let deltaPosition = (currentPose.position - frameOriginPose.position + _translationToOriginalFrame) / translationScale
+            _connection?.send(PoseStateMessage(gripperDeltaPosition: deltaPosition, gripperOpenAmount: gripperOpen, gripperRotateDegrees: gripperRotation))
+            _lastTransmittedPose = currentPose
+        } else {
+            // We haven't moved yet, just transmit gripper
+            _connection?.send(PoseStateMessage(gripperDeltaPosition: .zero, gripperOpenAmount: gripperOpen, gripperRotateDegrees: gripperRotation))
         }
+        _poseLastTransmittedAt = now
     }
 
     private func runTask() async {
         while true {
             do {
-                let connection = try await AsyncTCPConnection(host: "10.104.162.243", port: 8000)
+                let connection = try await AsyncTCPConnection(host: "10.104.162.245", port: 8000)
                 _connection = connection
                 connection.send(HelloMessage(message: "Hello from iOS!"))
                 for try await receivedMessage in connection {

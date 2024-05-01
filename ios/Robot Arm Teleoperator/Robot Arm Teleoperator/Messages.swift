@@ -9,16 +9,8 @@ struct HelloMessage: JSONMessage {
     let message: String
 }
 
-struct PoseUpdateMessage: JSONMessage {
-    let initialPose: Matrix4x4
-    let pose: Matrix4x4
-    let deltaPosition: Vector3
-}
-
-struct GripperOpenMessage: JSONMessage {
-    let openAmount: Float
-}
-
-struct GripperRotateMessage: JSONMessage {
-    let degrees: Float
+struct PoseStateMessage: JSONMessage {
+    let gripperDeltaPosition: Vector3
+    let gripperOpenAmount: Float
+    let gripperRotateDegrees: Float
 }

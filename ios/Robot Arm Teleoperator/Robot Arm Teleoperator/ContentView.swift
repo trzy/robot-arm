@@ -92,11 +92,11 @@ struct ContentView : View {
 
                     ZStack {
                         Rectangle()
-                            .fill((teleoperation.transmitting ? Color.red : Color.green).opacity(0.5))
+                            .fill((teleoperation.moving ? Color.red : Color.green).opacity(0.5))
                             .onTouchDown {
-                                teleoperation.transmitting = !teleoperation.transmitting
+                                teleoperation.moving = !teleoperation.moving
                             }
-                        Text(teleoperation.transmitting ? "Stop Teleoperation" : "Start Teleoperation")
+                        Text(teleoperation.moving ? "Stop" : "Move")
                     }
                 }
             }
