@@ -14,6 +14,7 @@ from typing import Annotated, Any, Dict, List, Tuple, Type
 import numpy as np
 from pydantic import BaseModel
 
+from .camera import CameraProcess
 from .networking import Server, Session, handler, MessageHandler
 from .robot import serial_ports, find_serial_port, ArmProcess
 
@@ -40,13 +41,19 @@ class PoseStateMessage(BaseModel):
 ####################################################################################################
 
 class RobotArmServer(MessageHandler):
-    def __init__(self, port: int, arm_process: ArmProcess):
+    def __init__(self, port: int, arm_process: ArmProcess, camera_process: CameraProcess):
         super().__init__()
         self.sessions = set()
         self._server = Server(port=port, message_handler=self)
         self._arm_process = arm_process
+        self._camera_process = camera_process
         self._position = np.array([ 0, 5*2.54*1e-2, 9*2.54*1e-2 ])  # pretty close to 0 position
-        arm_process.move_arm(position=self._position, gripper_open_amount=0, gripper_rotate_degrees=0)
+        arm_process.move_arm(
+            position=self._position,
+            gripper_open_amount=0,
+            gripper_rotate_degrees=0,
+            frame_grabber=None
+        )
     
     async def run(self):
         await self._server.run()
@@ -75,7 +82,13 @@ class RobotArmServer(MessageHandler):
         # Move arm if it is not busy
         if not self._arm_process.is_busy():
             position = self._position + delta_position
-            self._arm_process.move_arm(position=position, gripper_open_amount=msg.gripperOpenAmount, gripper_rotate_degrees=msg.gripperRotateDegrees)
+            self._arm_process.move_arm(
+                position=position,
+                gripper_open_amount=msg.gripperOpenAmount,
+                gripper_rotate_degrees=msg.gripperRotateDegrees,
+                frame_grabber=self._camera_process.frame_grabber
+            )
+
 
 ####################################################################################################
 # Program Entry Point
@@ -98,14 +111,16 @@ def get_serial_port() -> str:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("robotest")
     parser.add_argument("--list-ports", action="store_true", help="List available serial ports")
-    parser.add_argument("--port", action="store", type=str, help="Serial port to use")
+    parser.add_argument("--port", metavar="name", action="store", type=str, help="Serial port to use")
+    parser.add_argument("--camera", metavar="index", action="store", type=int, help="Camera to use")
     options = parser.parse_args()
 
     port = get_serial_port()
     arm_process = ArmProcess(serial_port=port)
+    camera_process = CameraProcess(camera_idx=options.camera)
 
     tasks = []
-    server = RobotArmServer(port=8000, arm_process=arm_process)
+    server = RobotArmServer(port=8000, arm_process=arm_process, camera_process=camera_process)
     loop = asyncio.new_event_loop()
     tasks.append(loop.create_task(server.run()))
     try:

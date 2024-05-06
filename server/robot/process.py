@@ -16,8 +16,7 @@ import cv2
 import numpy as np
 
 from .arm import Arm
-from ..util import FrameRateCalculator
-
+from ..camera import FrameGrabber
 
 ####################################################################################################
 # Inter-Process Communication
@@ -35,6 +34,7 @@ class MoveArmCommand:
     position: np.ndarray
     gripper_open_amount: float
     gripper_rotate_degrees: float
+    frame_grabber: FrameGrabber | None
 
 @dataclass
 class TerminateProcessCommand:
@@ -45,12 +45,10 @@ class TerminateProcessCommand:
 # Sub-Process Public API
 ####################################################################################################
 
-from ..camera import CameraProcess
-_camera_process = None
-
 @dataclass
 class CommandFinishedResponse:
     error: str | None = None
+    frame: np.ndarray | None = None
 
     def succeeded(self):
         return self.error is None
@@ -87,8 +85,8 @@ class ArmProcess:
         self._command_queue.put(ResetPoseCommand(wait_for_completion=wait_for_completion))
         self._num_commands_in_progress += 1
     
-    def move_arm(self, position: np.ndarray, gripper_open_amount: float, gripper_rotate_degrees: float):
-        self._command_queue.put(MoveArmCommand(position=position, gripper_open_amount=gripper_open_amount, gripper_rotate_degrees=gripper_rotate_degrees))
+    def move_arm(self, position: np.ndarray, gripper_open_amount: float, gripper_rotate_degrees: float, frame_grabber: FrameGrabber):
+        self._command_queue.put(MoveArmCommand(position=position, gripper_open_amount=gripper_open_amount, gripper_rotate_degrees=gripper_rotate_degrees, frame_grabber=frame_grabber))
 
     def _try_get_response(self) -> CommandFinishedResponse | None:
         try:
@@ -97,8 +95,6 @@ class ArmProcess:
             return None
 
     def _run(command_queue: Queue, response_queue: Queue, serial_port: str):
-        global _camera_process
-        _camera_process = CameraProcess(camera_idx=0)
         arm = Arm(port=serial_port)
         handler_by_command: Dict[Type, Callable] = {
             ResetPoseCommand: ArmProcess._handle_reset_position,
@@ -118,6 +114,8 @@ class ArmProcess:
         response_queue.put(CommandFinishedResponse())
     
     def _handle_move_arm(arm: Arm, command: MoveArmCommand, response_queue: Queue):
+        response = CommandFinishedResponse()
+
         # Clamp vertical position so we don't hit table. 
         # Note: Kinematic chain seems to be set up wrong because 0.0409m is the height of motor 1
         # axis above origin point. If chain were set up correctly, 0 would be the table surface
@@ -128,6 +126,10 @@ class ArmProcess:
         # Get current joint angles
         motor_radians = arm.read_motor_radians()
 
+        # Get current frame
+        if command.frame_grabber:
+            response.frame = command.frame_grabber.get_frame_buffer()
+
         # Gripper open amount
         closed_degrees = -5.0
         open_degrees = 90.0
@@ -136,24 +138,6 @@ class ArmProcess:
         # Gripper rotation
         gripper_rotate_degrees = min(90.0, max(-90.0, command.gripper_rotate_degrees))
 
-        # Get camera frame
-        # t0 = time.perf_counter()
-        # success, frame = _camera.read()
-        # t1 = time.perf_counter()
-        # _fps.record_frame()
-        # if not success:
-        #     print("Camera error")
-        # t0 = time.perf_counter()
-        # cv2.putText(frame, "%1.1f" % _fps.fps, org = (50, 50), fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = 1, color = (0, 255, 255), thickness = 2, lineType = cv2.LINE_AA)
-        # cv2.imshow("Camera", frame)
-        # cv2.waitKey(1)
-        # t1 = time.perf_counter()
-        # print(f"{(t1-t0)/1e-3} ms")
-        global _camera_process
-        cv2.imshow("Camera", _camera_process.get_frame_buffer())
-        cv2.waitKey(1)
-        
-
         # Apply to arm
         arm.set_end_effector_target_position(target_position=position, initial_motor_radians=motor_radians, gripper_open_degrees=gripper_open_degrees, gripper_rotate_degrees=gripper_rotate_degrees)
-        response_queue.put(CommandFinishedResponse())
+        response_queue.put(response)

@@ -1,1 +1,1 @@
-from .camera_process import CameraProcess
+from .camera_process import CameraProcess, FrameGrabber

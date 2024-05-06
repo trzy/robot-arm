@@ -6,7 +6,8 @@
 # to shared memory for readers.
 #
 
-from multiprocessing import Process, shared_memory
+from multiprocessing import Process, shared_memory, Value
+from multiprocessing.sharedctypes import Synchronized
 import time
 
 import cv2
@@ -15,23 +16,55 @@ import numpy as np
 from ..util import FrameRateCalculator
 
 
+class FrameGrabber:
+    def __init__(self):
+        self._memory: shared_memory.SharedMemory | None = None
+    
+    def __del__(self):
+        if self._memory is not None:
+            self._memory.close()
+    
+    def get_frame_buffer(self) -> np.ndarray:
+        if self._memory is None:
+            # Lazy instantiate only when this grabber is used
+            self._memory = shared_memory.SharedMemory(name="camera_frame_buffer")
+        return np.ndarray(shape=(480,640,3), dtype=np.uint8, buffer=self._memory.buf, order="C")
+
 class CameraProcess:
     def __init__(self, camera_idx: int):
+        # Synchronized flag to terminate sub-processes
+        self._terminate = Value("b", False)
+
+        # Synchronized frame rate, written by acquisition process
+        self._fps = Value("d", 0.0)
+
+        # Shared memory for frame buffer
         try:
-            self._memory = shared_memory.SharedMemory(name="camera_frame_buffer", create=True, size=640*480*3 + 1)
+            self._memory = shared_memory.SharedMemory(name="camera_frame_buffer", create=True, size=640*480*3)
         except FileExistsError:
             self._memory = shared_memory.SharedMemory(name="camera_frame_buffer")
         self._memory_buffer = self._memory.buf
-        self._set_termination_flag(terminate=False)
-        print("Starting camera process...")
-        process_args = (camera_idx,)
-        self._process = Process(target=CameraProcess._run, args=process_args)
-        self._process.start()
+
+        # Frame grabber object that is safe to pass to other processes
+        self.frame_grabber = FrameGrabber()
+
+        # Camera frame acquisition process
+        print("Starting camera frame acquisition process...")
+        frame_acquisition_process_args = (camera_idx, self._fps, self._terminate)
+        self._frame_acquisition_process = Process(target=CameraProcess._run_frame_acquisition, args=frame_acquisition_process_args)
+        self._frame_acquisition_process.start()
+
+        # Camera display window process
+        print("Starting camera display window process...")
+        display_process_args = (self.frame_grabber, self._fps, self._terminate)
+        self._display_process = Process(target=CameraProcess._run_display_window, args=display_process_args)
+        self._display_process.start()
 
     def __del__(self):
         # Signal termination using last byte in buffer
-        self._set_termination_flag(terminate=True)
-        self._process.join()
+        self._terminate_subprocesses()
+        self._frame_acquisition_process.join()
+        self._display_process.join()
         self._memory.close()
         self._memory.unlink()
         print("Terminated camera process")
@@ -39,26 +72,31 @@ class CameraProcess:
     def get_frame_buffer(self) -> np.ndarray:
         return np.ndarray(shape=(480,640,3), dtype=np.uint8, buffer=self._memory_buffer, order="C")
 
-    def _set_termination_flag(self, terminate: bool):
-        self._memory_buffer[640*480*3 + 0] = 1 if terminate else 0
+    def _terminate_subprocesses(self):
+        self._terminate.value = True
 
     @staticmethod
-    def _terminate(memory: memoryview):
-        return memory[640*480*3+0] != 0
-
-    @staticmethod
-    def _run(camera_idx: int):
-        fps = FrameRateCalculator()
+    def _run_frame_acquisition(camera_idx: int, fps: Synchronized, terminate: Synchronized):
+        fps_calculator = FrameRateCalculator()
         memory = shared_memory.SharedMemory(name="camera_frame_buffer")
         capture = cv2.VideoCapture(index=camera_idx, apiPreference=cv2.CAP_AVFOUNDATION)
         capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
         capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-        while not CameraProcess._terminate(memory=memory.buf):
+        while not terminate.value:
             success, frame = capture.read()
-            fps.record_frame()
+            fps_calculator.record_frame()
+            fps.value = fps_calculator.fps
             if not success:
                 time.sleep(1.0/30.0)
                 continue
-            cv2.putText(frame, "%1.1f" % fps.fps, org = (50, 50), fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = 1, color = (0, 255, 255), thickness = 2, lineType = cv2.LINE_AA)
             memory.buf[0:640*480*3] = frame.flatten()[:]
         memory.close()
+    
+    @staticmethod
+    def _run_display_window(frame_grabber: FrameGrabber, fps: Synchronized, terminate: Synchronized):
+        while not terminate.value:
+            frame = frame_grabber.get_frame_buffer()
+            cv2.putText(frame, "%1.0f" % fps.value, org = (50, 50), fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = 1, color = (0, 255, 255), thickness = 2, lineType = cv2.LINE_AA)
+            cv2.imshow("Camera", frame_grabber.get_frame_buffer())
+            cv2.waitKey(1)
+
