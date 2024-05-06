@@ -17,8 +17,8 @@ class FrameRateCalculator:
 def main(camera_idx: int):
     # Initialize the webcam
     cap = cv2.VideoCapture(index=camera_idx, apiPreference=cv2.CAP_AVFOUNDATION)
-    #cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-    #cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
     # Check if the webcam is opened correctly
     if not cap.isOpened():
@@ -30,10 +30,14 @@ def main(camera_idx: int):
 
     fps = FrameRateCalculator()
 
+    i = 0
     while True:
         # Capture frame-by-frame
         ret, frame = cap.read()
         fps.record_frame()
+        i += 1
+        if i % 60 == 0:
+            print(fps.fps)
 
         # If frame is read correctly, ret is True
         if not ret:

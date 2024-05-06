@@ -9,11 +9,14 @@
 from dataclasses import dataclass
 from multiprocessing import Queue, Process
 from queue import Empty
+import time
 from typing import Callable, Dict, Type
 
+import cv2
 import numpy as np
 
 from .arm import Arm
+from ..util import FrameRateCalculator
 
 
 ####################################################################################################
@@ -41,6 +44,9 @@ class TerminateProcessCommand:
 ####################################################################################################
 # Sub-Process Public API
 ####################################################################################################
+
+from ..camera import CameraProcess
+_camera_process = None
 
 @dataclass
 class CommandFinishedResponse:
@@ -91,6 +97,8 @@ class ArmProcess:
             return None
 
     def _run(command_queue: Queue, response_queue: Queue, serial_port: str):
+        global _camera_process
+        _camera_process = CameraProcess(camera_idx=0)
         arm = Arm(port=serial_port)
         handler_by_command: Dict[Type, Callable] = {
             ResetPoseCommand: ArmProcess._handle_reset_position,
@@ -127,6 +135,24 @@ class ArmProcess:
 
         # Gripper rotation
         gripper_rotate_degrees = min(90.0, max(-90.0, command.gripper_rotate_degrees))
+
+        # Get camera frame
+        # t0 = time.perf_counter()
+        # success, frame = _camera.read()
+        # t1 = time.perf_counter()
+        # _fps.record_frame()
+        # if not success:
+        #     print("Camera error")
+        # t0 = time.perf_counter()
+        # cv2.putText(frame, "%1.1f" % _fps.fps, org = (50, 50), fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = 1, color = (0, 255, 255), thickness = 2, lineType = cv2.LINE_AA)
+        # cv2.imshow("Camera", frame)
+        # cv2.waitKey(1)
+        # t1 = time.perf_counter()
+        # print(f"{(t1-t0)/1e-3} ms")
+        global _camera_process
+        cv2.imshow("Camera", _camera_process.get_frame_buffer())
+        cv2.waitKey(1)
+        
 
         # Apply to arm
         arm.set_end_effector_target_position(target_position=position, initial_motor_radians=motor_radians, gripper_open_degrees=gripper_open_degrees, gripper_rotate_degrees=gripper_rotate_degrees)
