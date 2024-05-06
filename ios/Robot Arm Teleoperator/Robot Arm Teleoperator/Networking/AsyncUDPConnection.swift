@@ -1,34 +1,29 @@
 //
-//  AsyncTCPConnection.swift
-//  Robophone
+//  AsyncUDPConnection.swift
+//  Robot Arm Teleoperator
 //
-//  Created by Bart Trzynadlowski on 3/31/24.
+//  Created by Bart Trzynadlowski on 5/6/24.
 //
 
 import Foundation
 import Network
 
-class AsyncTCPConnection: AsyncSequence {
-    private let _queue = DispatchQueue(label: "com.cambrianmoment.robot-arm-teleoperator.tcp", qos: .default)
+class AsyncUDPConnection: AsyncSequence {
+    private let _queue = DispatchQueue(label: "com.cambrianmoment.robot-arm-teleoperator.udp", qos: .default)
     private let _connection: NWConnection
-    private var _connectContinuation: AsyncStream<AsyncTCPConnection>.Continuation?
+    private var _connectContinuation: AsyncStream<AsyncUDPConnection>.Continuation?
     private var _receivedData: AsyncThrowingStream<ReceivedJSONMessage, Error>!
     private var _receivedDataContinuation: AsyncThrowingStream<ReceivedJSONMessage, Error>.Continuation?
 
     // MARK: API - Methods
 
-    // Outbound connections
     init(host: String, port: UInt16) async throws {
         let host = NWEndpoint.Host(host)
         guard let port = NWEndpoint.Port(rawValue: port) else {
             throw ConnectionError.invalidPort
         }
 
-        let options = NWProtocolTCP.Options()
-        options.noDelay = true
-        options.connectionTimeout = 5
-        let params = NWParameters(tls: nil, tcp: options)
-        _connection = NWConnection(host: host, port: port, using: params)
+        _connection = NWConnection(host: host, port: port, using: .udp)
 
         _receivedData = AsyncThrowingStream<ReceivedJSONMessage, Error> { [weak self] continuation in
             self?._queue.async { [weak self] in
@@ -36,7 +31,7 @@ class AsyncTCPConnection: AsyncSequence {
             }
         }
 
-        let connectStream = AsyncStream<AsyncTCPConnection> { [weak self] continuation in
+        let connectStream = AsyncStream<AsyncUDPConnection> { [weak self] continuation in
             guard let self = self else {
                 continuation.finish()
                 return
@@ -62,12 +57,8 @@ class AsyncTCPConnection: AsyncSequence {
         }
     }
 
-    deinit {
-        close()
-    }
-
     var isReliable: Bool {
-        return true
+        return false
     }
 
     func send(_ message: JSONMessage) {
@@ -85,7 +76,7 @@ class AsyncTCPConnection: AsyncSequence {
     func close() {
         _connection.forceCancel()
     }
-    
+
     // MARK: AsyncStream Conformance
 
     typealias AsyncIterator = AsyncThrowingStream<ReceivedJSONMessage, Error>.Iterator
@@ -185,12 +176,12 @@ class AsyncTCPConnection: AsyncSequence {
     }
 }
 
-extension AsyncTCPConnection: CustomStringConvertible {
+extension AsyncUDPConnection: CustomStringConvertible {
     var description: String {
-        return "tcp://\(_connection.endpoint)"
+        return "udp://\(_connection.endpoint)"
     }
 }
 
 fileprivate func log(_ message: String) {
-    print("[AsyncTCPConnection] \(message)")
+    print("[AsyncUDPConnection] \(message)")
 }

@@ -25,6 +25,9 @@
 		CC4510462BD06F390008AFE1 /* OnTouch.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC4510452BD06F390008AFE1 /* OnTouch.swift */; };
 		CC59A6D82BD9A7FC00BA5B57 /* NonReactiveState.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC59A6D72BD9A7FC00BA5B57 /* NonReactiveState.swift */; };
 		CC59A6DA2BD9AA3200BA5B57 /* Clamp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC59A6D92BD9AA3200BA5B57 /* Clamp.swift */; };
+		CC7687232BE9866E001B042F /* AsyncUDPConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC7687222BE9866E001B042F /* AsyncUDPConnection.swift */; };
+		CC7687252BE98765001B042F /* ConnectionError.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC7687242BE98765001B042F /* ConnectionError.swift */; };
+		CC7687272BE98A42001B042F /* HexDump.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC7687262BE98A42001B042F /* HexDump.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -66,6 +69,9 @@
 		CC4510452BD06F390008AFE1 /* OnTouch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnTouch.swift; sourceTree = "<group>"; };
 		CC59A6D72BD9A7FC00BA5B57 /* NonReactiveState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NonReactiveState.swift; sourceTree = "<group>"; };
 		CC59A6D92BD9AA3200BA5B57 /* Clamp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Clamp.swift; sourceTree = "<group>"; };
+		CC7687222BE9866E001B042F /* AsyncUDPConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncUDPConnection.swift; sourceTree = "<group>"; };
+		CC7687242BE98765001B042F /* ConnectionError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionError.swift; sourceTree = "<group>"; };
+		CC7687262BE98A42001B042F /* HexDump.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexDump.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -121,10 +127,10 @@
 				CC4510442BD06F270008AFE1 /* Views */,
 				CC0893D12BCF399B00D82209 /* AppDelegate.swift */,
 				CC0893D32BCF399B00D82209 /* ContentView.swift */,
-				CC0893D52BCF399C00D82209 /* Assets.xcassets */,
-				CC0893D72BCF399C00D82209 /* Preview Content */,
 				CC0894092BCF3E6000D82209 /* Teleoperation.swift */,
 				CC08940B2BCF3EF000D82209 /* Messages.swift */,
+				CC0893D52BCF399C00D82209 /* Assets.xcassets */,
+				CC0893D72BCF399C00D82209 /* Preview Content */,
 			);
 			path = "Robot Arm Teleoperator";
 			sourceTree = "<group>";
@@ -157,8 +163,10 @@
 		CC0893FB2BCF39C200D82209 /* Networking */ = {
 			isa = PBXGroup;
 			children = (
-				CC0893FC2BCF39E300D82209 /* AsyncTCPConnection.swift */,
 				CC0893FD2BCF39E300D82209 /* JSONMessage.swift */,
+				CC7687242BE98765001B042F /* ConnectionError.swift */,
+				CC0893FC2BCF39E300D82209 /* AsyncTCPConnection.swift */,
+				CC7687222BE9866E001B042F /* AsyncUDPConnection.swift */,
 			);
 			path = Networking;
 			sourceTree = "<group>";
@@ -171,6 +179,7 @@
 				CC0894022BCF3A6100D82209 /* simd_float4x4+Extensions.swift */,
 				CC0894042BCF3A6100D82209 /* simd_quatf+Extensions.swift */,
 				CC59A6D92BD9AA3200BA5B57 /* Clamp.swift */,
+				CC7687262BE98A42001B042F /* HexDump.swift */,
 			);
 			path = Util;
 			sourceTree = "<group>";
@@ -317,7 +326,10 @@
 				CC0894072BCF3A6100D82209 /* float+Extensions.swift in Sources */,
 				CC08940A2BCF3E6000D82209 /* Teleoperation.swift in Sources */,
 				CC0894052BCF3A6100D82209 /* simd_float3+Extensions.swift in Sources */,
+				CC7687272BE98A42001B042F /* HexDump.swift in Sources */,
+				CC7687252BE98765001B042F /* ConnectionError.swift in Sources */,
 				CC4510462BD06F390008AFE1 /* OnTouch.swift in Sources */,
+				CC7687232BE9866E001B042F /* AsyncUDPConnection.swift in Sources */,
 				CC0893D42BCF399B00D82209 /* ContentView.swift in Sources */,
 				CC0893FE2BCF39E300D82209 /* AsyncTCPConnection.swift in Sources */,
 				CC0893D22BCF399B00D82209 /* AppDelegate.swift in Sources */,

@@ -68,7 +68,8 @@ class Teleoperation: ObservableObject {
 
     init() {
         _task = Task {
-            await runTask()
+            //await runTask()
+            await runUDPTestTask()
         }
     }
 
@@ -125,6 +126,25 @@ class Teleoperation: ObservableObject {
                 log("Error: \(error.localizedDescription)")
             }
             _connection = nil
+            try? await Task.sleep(for: .seconds(5))
+        }
+    }
+
+    private var _udpConnection: AsyncUDPConnection?
+
+    private func runUDPTestTask() async {
+        while true {
+            do {
+                let connection = try await AsyncUDPConnection(host: "10.104.162.245", port: 8001)
+                _udpConnection = connection
+                connection.send(HelloMessage(message: "Hello from iOS over UDP!"))
+                for try await receivedMessage in connection {
+                    hexDump(receivedMessage.jsonData)
+                }
+            } catch {
+                log("Error: \(error.localizedDescription)")
+            }
+            _udpConnection = nil
             try? await Task.sleep(for: .seconds(5))
         }
     }
