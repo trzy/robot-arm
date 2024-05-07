@@ -44,6 +44,7 @@ def handler(message_type):
                 await func(self, session, msg, timestamp)
             except:
                 print("Error: Failed to handle message %s: %s" % (str(message_type), sys.exc_info()))
+                raise
         return handler_wrapper
     return handler_decorator
 
