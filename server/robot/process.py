@@ -94,8 +94,14 @@ class ArmProcess:
         self._command_queue.put(FrameProviderCommand(provider=provider))
         self._num_commands_in_progress += 1
     
-    def move_arm(self, position: np.ndarray, gripper_open_amount: float, gripper_rotate_degrees: float):
+    def move_arm(self, position: np.ndarray, gripper_open_amount: float, gripper_rotate_degrees: float, wait_for_frame: bool = False) -> np.ndarray | None:
         self._command_queue.put(MoveArmCommand(position=position, gripper_open_amount=gripper_open_amount, gripper_rotate_degrees=gripper_rotate_degrees))
+        if wait_for_frame:
+            while True:
+                response = self._try_get_response()
+                if response is not None:
+                    return response.frame
+        return None
 
     def _try_get_response(self) -> CommandFinishedResponse | None:
         try:

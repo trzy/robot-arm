@@ -83,10 +83,11 @@ class RobotArmServer(MessageHandler):
         # Move arm if it is not busy
         if not self._arm_process.is_busy():
             position = self._position + delta_position
-            self._arm_process.move_arm(
+            frame = self._arm_process.move_arm(
                 position=position,
                 gripper_open_amount=msg.gripperOpenAmount,
-                gripper_rotate_degrees=msg.gripperRotateDegrees
+                gripper_rotate_degrees=msg.gripperRotateDegrees,
+                wait_for_frame=True
             )
 
 
