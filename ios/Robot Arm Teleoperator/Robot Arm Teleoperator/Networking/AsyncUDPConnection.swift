@@ -8,14 +8,14 @@
 import Foundation
 import Network
 
-class AsyncUDPConnection: AsyncSequence {
+class AsyncUDPConnection: AsyncConnection {
     private let _queue = DispatchQueue(label: "com.cambrianmoment.robot-arm-teleoperator.udp", qos: .default)
     private let _connection: NWConnection
     private var _connectContinuation: AsyncStream<AsyncUDPConnection>.Continuation?
     private var _receivedData: AsyncThrowingStream<ReceivedJSONMessage, Error>!
     private var _receivedDataContinuation: AsyncThrowingStream<ReceivedJSONMessage, Error>.Continuation?
 
-    // MARK: API - Methods
+    // MARK: AsyncConnection API
 
     init(host: String, port: UInt16) async throws {
         let host = NWEndpoint.Host(host)
@@ -65,28 +65,17 @@ class AsyncUDPConnection: AsyncSequence {
         send(message.serialize())
     }
 
-    func send(_ data: Data) {
-        _connection.send(content: data, completion: .idempotent)
-    }
-
-    func send(_ data: Data, completion: ((NWError?) -> Void)?) {
-        _connection.send(content: data, completion: .contentProcessed(completion ?? { _ in }))
-    }
-
     func close() {
         _connection.forceCancel()
     }
 
     // MARK: AsyncStream Conformance
 
-    typealias AsyncIterator = AsyncThrowingStream<ReceivedJSONMessage, Error>.Iterator
-    typealias Element = ReceivedJSONMessage
-
     func makeAsyncIterator() -> AsyncThrowingStream<ReceivedJSONMessage, any Error>.Iterator {
         return _receivedData.makeAsyncIterator()
     }
 
-    // MARK: Internal events and message reception
+    // MARK: Internal implementation
 
     private func onState(_ newState: NWConnection.State) {
         switch (newState) {
@@ -118,6 +107,15 @@ class AsyncUDPConnection: AsyncSequence {
             // Don't care
             break
         }
+    }
+
+    private func send(_ data: Data) {
+        _connection.send(content: data, completion: .idempotent)
+        print("Sent \(data.count) bytes")
+    }
+
+    private func send(_ data: Data, completion: ((NWError?) -> Void)?) {
+        _connection.send(content: data, completion: .contentProcessed(completion ?? { _ in }))
     }
 
     private func receiveMessageHeader() {

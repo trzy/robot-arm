@@ -10,9 +10,10 @@ import RealityKit
 import SwiftUI
 
 class Teleoperation: ObservableObject {
-    private var _task: Task<Void, Never>!
+    private var _tasks: [Task<Void, Never>] = []
     private var _subscriptions: [Cancellable] = []
-    private var _connection: AsyncTCPConnection?
+    private var _reliableConnection: (any AsyncConnection)?
+    private var _unreliableConnection: (any AsyncConnection)?
     private var _poseLastTransmittedAt: TimeInterval = 0
     private var _lastPose: Matrix4x4 = .identity
     private var _lastTransmittedPose: Matrix4x4 = .identity
@@ -67,10 +68,12 @@ class Teleoperation: ObservableObject {
     var gripperRotation: Float = 0.0
 
     init() {
-        _task = Task {
-            //await runTask()
-            await runUDPTestTask()
-        }
+        _tasks.append(Task {
+            await runReliableConnectionTask()
+        })
+        _tasks.append(Task {
+            await runUnreliableConnectionTask()
+        })
     }
 
     func resetToHomePose() {
@@ -78,7 +81,7 @@ class Teleoperation: ObservableObject {
         _frameOriginPose = _lastPose
         _translationToOriginalFrame = .zero
         if _frameOriginPose != nil {
-            _connection?.send(PoseStateMessage(gripperDeltaPosition: .zero, gripperOpenAmount: 0, gripperRotateDegrees: 0))
+            _reliableConnection?.send(PoseStateMessage(gripperDeltaPosition: .zero, gripperOpenAmount: 0, gripperRotateDegrees: 0))
         }
     }
 
@@ -104,52 +107,50 @@ class Teleoperation: ObservableObject {
         let currentPose = moving ? pose : _lastTransmittedPose    // when not moving, keep transmitting old pose (and always update gripper)
         if let frameOriginPose = _frameOriginPose {
             let deltaPosition = (currentPose.position - frameOriginPose.position + _translationToOriginalFrame) / translationScale
-            _connection?.send(PoseStateMessage(gripperDeltaPosition: deltaPosition, gripperOpenAmount: gripperOpen, gripperRotateDegrees: gripperRotation))
+            _unreliableConnection?.send(PoseStateMessage(gripperDeltaPosition: deltaPosition, gripperOpenAmount: gripperOpen, gripperRotateDegrees: gripperRotation))
             _lastTransmittedPose = currentPose
         } else {
             // We haven't moved yet, just transmit gripper
-            _connection?.send(PoseStateMessage(gripperDeltaPosition: .zero, gripperOpenAmount: gripperOpen, gripperRotateDegrees: gripperRotation))
+            _unreliableConnection?.send(PoseStateMessage(gripperDeltaPosition: .zero, gripperOpenAmount: gripperOpen, gripperRotateDegrees: gripperRotation))
         }
         _poseLastTransmittedAt = now
     }
 
-    private func runTask() async {
+    private func runReliableConnectionTask() async {
         while true {
             do {
                 let connection = try await AsyncTCPConnection(host: "10.104.162.245", port: 8000)
-                _connection = connection
-                connection.send(HelloMessage(message: "Hello from iOS!"))
+                _reliableConnection = connection
+                connection.send(HelloMessage(message: "Hello from iOS over TCP!"))
                 for try await receivedMessage in connection {
                     await handleMessage(receivedMessage, connection: connection)
                 }
             } catch {
                 log("Error: \(error.localizedDescription)")
             }
-            _connection = nil
+            _reliableConnection = nil
             try? await Task.sleep(for: .seconds(5))
         }
     }
 
-    private var _udpConnection: AsyncUDPConnection?
-
-    private func runUDPTestTask() async {
+    private func runUnreliableConnectionTask() async {
         while true {
             do {
                 let connection = try await AsyncUDPConnection(host: "10.104.162.245", port: 8001)
-                _udpConnection = connection
+                _unreliableConnection = connection
                 connection.send(HelloMessage(message: "Hello from iOS over UDP!"))
                 for try await receivedMessage in connection {
-                    hexDump(receivedMessage.jsonData)
+                    await handleMessage(receivedMessage, connection: connection)
                 }
             } catch {
                 log("Error: \(error.localizedDescription)")
             }
-            _udpConnection = nil
+            _unreliableConnection = nil
             try? await Task.sleep(for: .seconds(5))
         }
     }
 
-    private func handleMessage(_ receivedMessage: ReceivedJSONMessage, connection: AsyncTCPConnection) async {
+    private func handleMessage(_ receivedMessage: ReceivedJSONMessage, connection: any AsyncConnection) async {
         switch receivedMessage.id {
         case HelloMessage.id:
             if let msg = JSONMessageDeserializer.decode(receivedMessage, as: HelloMessage.self) {

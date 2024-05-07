@@ -28,6 +28,7 @@
 		CC7687232BE9866E001B042F /* AsyncUDPConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC7687222BE9866E001B042F /* AsyncUDPConnection.swift */; };
 		CC7687252BE98765001B042F /* ConnectionError.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC7687242BE98765001B042F /* ConnectionError.swift */; };
 		CC7687272BE98A42001B042F /* HexDump.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC7687262BE98A42001B042F /* HexDump.swift */; };
+		CC76872B2BE994D4001B042F /* AsyncConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC76872A2BE994D4001B042F /* AsyncConnection.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -72,6 +73,7 @@
 		CC7687222BE9866E001B042F /* AsyncUDPConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncUDPConnection.swift; sourceTree = "<group>"; };
 		CC7687242BE98765001B042F /* ConnectionError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionError.swift; sourceTree = "<group>"; };
 		CC7687262BE98A42001B042F /* HexDump.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexDump.swift; sourceTree = "<group>"; };
+		CC76872A2BE994D4001B042F /* AsyncConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncConnection.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -165,6 +167,7 @@
 			children = (
 				CC0893FD2BCF39E300D82209 /* JSONMessage.swift */,
 				CC7687242BE98765001B042F /* ConnectionError.swift */,
+				CC76872A2BE994D4001B042F /* AsyncConnection.swift */,
 				CC0893FC2BCF39E300D82209 /* AsyncTCPConnection.swift */,
 				CC7687222BE9866E001B042F /* AsyncUDPConnection.swift */,
 			);
@@ -334,6 +337,7 @@
 				CC0893FE2BCF39E300D82209 /* AsyncTCPConnection.swift in Sources */,
 				CC0893D22BCF399B00D82209 /* AppDelegate.swift in Sources */,
 				CC0894062BCF3A6100D82209 /* simd_float4x4+Extensions.swift in Sources */,
+				CC76872B2BE994D4001B042F /* AsyncConnection.swift in Sources */,
 				CC59A6D82BD9A7FC00BA5B57 /* NonReactiveState.swift in Sources */,
 				CC08940C2BCF3EF000D82209 /* Messages.swift in Sources */,
 				CC59A6DA2BD9AA3200BA5B57 /* Clamp.swift in Sources */,
