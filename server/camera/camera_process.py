@@ -16,7 +16,7 @@ import numpy as np
 from ..util import FrameRateCalculator
 
 
-class FrameGrabber:
+class CameraFrameProvider:
     def __init__(self):
         self._memory: shared_memory.SharedMemory | None = None
     
@@ -26,8 +26,8 @@ class FrameGrabber:
     
     def get_frame_buffer(self) -> np.ndarray:
         if self._memory is None:
-            # Lazy instantiate only when this grabber is used
-            self._memory = shared_memory.SharedMemory(name="camera_frame_buffer")
+            # Lazy instantiate only when this provider is used
+            self._memory = shared_memory.SharedMemory(name="camera_frame_buffer", create=False)
         return np.ndarray(shape=(480,640,3), dtype=np.uint8, buffer=self._memory.buf, order="C")
 
 class CameraProcess:
@@ -45,9 +45,6 @@ class CameraProcess:
             self._memory = shared_memory.SharedMemory(name="camera_frame_buffer")
         self._memory_buffer = self._memory.buf
 
-        # Frame grabber object that is safe to pass to other processes
-        self.frame_grabber = FrameGrabber()
-
         # Camera frame acquisition process
         print("Starting camera frame acquisition process...")
         frame_acquisition_process_args = (camera_idx, self._fps, self._terminate)
@@ -56,7 +53,7 @@ class CameraProcess:
 
         # Camera display window process
         print("Starting camera display window process...")
-        display_process_args = (self.frame_grabber, self._fps, self._terminate)
+        display_process_args = (self._fps, self._terminate)
         self._display_process = Process(target=CameraProcess._run_display_window, args=display_process_args)
         self._display_process.start()
 
@@ -93,10 +90,11 @@ class CameraProcess:
         memory.close()
     
     @staticmethod
-    def _run_display_window(frame_grabber: FrameGrabber, fps: Synchronized, terminate: Synchronized):
+    def _run_display_window(fps: Synchronized, terminate: Synchronized):
+        frame_provider = CameraFrameProvider()
         while not terminate.value:
-            frame = frame_grabber.get_frame_buffer()
+            frame = frame_provider.get_frame_buffer()
             cv2.putText(frame, "%1.0f" % fps.value, org = (50, 50), fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = 1, color = (0, 255, 255), thickness = 2, lineType = cv2.LINE_AA)
-            cv2.imshow("Camera", frame_grabber.get_frame_buffer())
+            cv2.imshow("Camera", frame)
             cv2.waitKey(1)
 

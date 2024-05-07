@@ -2,8 +2,7 @@
 # tcp.py
 # Bart Trzynadlowski
 #
-# Asynchronous TCP server and client. Designed to be run as asynchronous tasks
-# in an event loop.
+# Asynchronous TCP server and client. Designed to be run as asynchronous tasks in an event loop.
 #
 
 import asyncio
@@ -15,17 +14,19 @@ from pydantic import BaseModel
 
 from .message_handling import MessageHandler
 from .serialization import serialize
+from .session import Session
 
 
-class Session:
+class TCPSession(Session):
     def __init__(self, reader, writer, remote_endpoint, message_handler):
+        super().__init__()
         self.remote_endpoint = remote_endpoint
         self._reader = reader
         self._writer = writer
         self._message_handler = message_handler
 
     def __del__(self):
-        print("Session object destroyed")
+        print("TCPSession object destroyed")
 
     def __str__(self):
         return str(self.remote_endpoint)
@@ -87,7 +88,7 @@ class Session:
                 print("Disconnected from %s: %s" % (self.remote_endpoint, e))
                 break
             except Exception as e:
-                print("Unexpected error in Session: %s" % e)
+                print("Unexpected error in TCPSession: %s" % e)
                 break
 
         # Helps ensure the connection on the other end sees a disconnect,
@@ -116,18 +117,18 @@ class Server:
             remote_endpoint = "unknown endpoint"
         else:
             peername = socket.getpeername()
-            remote_endpoint = ("%s:%d" % peername[0:2]) if len(peername) >= 2 else None
+            remote_endpoint = ("tcp://%s:%d" % peername[0:2]) if len(peername) >= 2 else None
             remote_endpoint = (remote_endpoint if remote_endpoint is not None else "unknown endpoint")
         print("New connection from %s" % remote_endpoint)
-        session = Session(reader=reader, writer=writer, remote_endpoint=remote_endpoint, message_handler=self._message_handler)
+        session = TCPSession(reader=reader, writer=writer, remote_endpoint=remote_endpoint, message_handler=self._message_handler)
         try:
             await self._message_handler.on_connect(session=session)
             self.sessions.append(session)
             await session._run()
-            print("Ended session with %s" % remote_endpoint)
+            print("Ended TCP session with %s" % remote_endpoint)
             await self._message_handler.on_disconnect(session=session)
         except Exception as e:
-            print("Unexpected error from Session or its message handler: %s" % e)
+            print("Unexpected error from TCPSession or its message handler: %s" % e)
             raise   # rethrow so we don't miss e.g. a task cancelation exception
         finally:
             await session._close()
@@ -143,7 +144,6 @@ class Server:
             print("Starting server on port %d..." % self._port)
             await server.serve_forever()
 
-
 class Client:
     def __init__(self, connect_to: str, message_handler: MessageHandler):
         self.id = str(uuid.uuid1())
@@ -154,13 +154,13 @@ class Client:
     async def run(self):
         print("Connecting to %s:%s..." % (self._host, self._port))
         reader, writer = await asyncio.open_connection(host=self._host, port=self._port)
-        self._session = Session(reader=reader, writer=writer, remote_endpoint=self._host + ":" + str(self._port), message_handler=self._message_handler)
+        self._session = TCPSession(reader=reader, writer=writer, remote_endpoint=self._host + ":" + str(self._port), message_handler=self._message_handler)
         try:
             await self._message_handler.on_connect(session=self._session)
             await self._session._run()
             return await self._message_handler.on_disconnect(session=self._session)
         except Exception as e:
-            print("Unexpected error from Session or its message handler: %s" % e)
+            print("Unexpected error from TCPSession or its message handler: %s" % e)
             raise
         finally:
             await self._session._close()

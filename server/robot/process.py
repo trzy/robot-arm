@@ -12,11 +12,11 @@ from queue import Empty
 import time
 from typing import Callable, Dict, Type
 
-import cv2
 import numpy as np
 
 from .arm import Arm
-from ..camera import FrameGrabber
+from ..camera import CameraFrameProvider
+
 
 ####################################################################################################
 # Inter-Process Communication
@@ -24,6 +24,10 @@ from ..camera import FrameGrabber
 # Internal objects passed back and forth between the server process and robot sub-process. Input and
 # output queues are used for communication.
 ####################################################################################################
+
+@dataclass
+class FrameProviderCommand:
+    provider: CameraFrameProvider
 
 @dataclass
 class ResetPoseCommand:
@@ -34,7 +38,6 @@ class MoveArmCommand:
     position: np.ndarray
     gripper_open_amount: float
     gripper_rotate_degrees: float
-    frame_grabber: FrameGrabber | None
 
 @dataclass
 class TerminateProcessCommand:
@@ -44,6 +47,8 @@ class TerminateProcessCommand:
 ####################################################################################################
 # Sub-Process Public API
 ####################################################################################################
+
+_frame_provider: CameraFrameProvider | None = None
 
 @dataclass
 class CommandFinishedResponse:
@@ -84,9 +89,13 @@ class ArmProcess:
     def reset_pose(self, wait_for_completion: bool = False):
         self._command_queue.put(ResetPoseCommand(wait_for_completion=wait_for_completion))
         self._num_commands_in_progress += 1
+
+    def set_camera_frame_provider(self, provider: CameraFrameProvider):
+        self._command_queue.put(FrameProviderCommand(provider=provider))
+        self._num_commands_in_progress += 1
     
-    def move_arm(self, position: np.ndarray, gripper_open_amount: float, gripper_rotate_degrees: float, frame_grabber: FrameGrabber):
-        self._command_queue.put(MoveArmCommand(position=position, gripper_open_amount=gripper_open_amount, gripper_rotate_degrees=gripper_rotate_degrees, frame_grabber=frame_grabber))
+    def move_arm(self, position: np.ndarray, gripper_open_amount: float, gripper_rotate_degrees: float):
+        self._command_queue.put(MoveArmCommand(position=position, gripper_open_amount=gripper_open_amount, gripper_rotate_degrees=gripper_rotate_degrees))
 
     def _try_get_response(self) -> CommandFinishedResponse | None:
         try:
@@ -97,6 +106,7 @@ class ArmProcess:
     def _run(command_queue: Queue, response_queue: Queue, serial_port: str):
         arm = Arm(port=serial_port)
         handler_by_command: Dict[Type, Callable] = {
+            FrameProviderCommand: ArmProcess._handle_frame_provider,
             ResetPoseCommand: ArmProcess._handle_reset_position,
             MoveArmCommand: ArmProcess._handle_move_arm
         }
@@ -108,6 +118,10 @@ class ArmProcess:
                 handler = handler_by_command.get(type(command))
                 if handler:
                     handler(arm, command, response_queue)
+
+    def _handle_frame_provider(arm: Arm, command: FrameProviderCommand, response_queue: Queue):
+        global _frame_provider
+        _frame_provider = command.provider
 
     def _handle_reset_position(arm: Arm, command: ResetPoseCommand, response_queue: Queue):
         arm.set_motor_goals(degrees=[0,0,0,0,0], wait=command.wait_for_completion)
@@ -127,8 +141,9 @@ class ArmProcess:
         motor_radians = arm.read_motor_radians()
 
         # Get current frame
-        if command.frame_grabber:
-            response.frame = command.frame_grabber.get_frame_buffer()
+        global _frame_provider
+        if _frame_provider:
+            response.frame = _frame_provider.get_frame_buffer()
 
         # Gripper open amount
         closed_degrees = -5.0
