@@ -88,12 +88,13 @@ class CameraProcess:
                 continue
             memory.buf[0:640*480*3] = frame.flatten()[:]
         memory.close()
+        capture.release()
     
     @staticmethod
     def _run_display_window(fps: Synchronized, terminate: Synchronized):
         frame_provider = CameraFrameProvider()
         while not terminate.value:
-            frame = frame_provider.get_frame_buffer()
+            frame = frame_provider.get_frame_buffer().copy()
             cv2.putText(frame, "%1.0f" % fps.value, org = (50, 50), fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = 1, color = (0, 255, 255), thickness = 2, lineType = cv2.LINE_AA)
             cv2.imshow("Camera", frame)
             cv2.waitKey(1)
