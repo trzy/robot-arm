@@ -32,6 +32,9 @@ class UDPSession(Session):
 
     def __str__(self):
         return str(self.remote_endpoint)
+    
+    def is_reliable(self):
+        return False
 
     async def send(self, message: BaseModel):
         """

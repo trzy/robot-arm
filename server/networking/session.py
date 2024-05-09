@@ -11,6 +11,9 @@ from pydantic import BaseModel
 class Session:
     def __str__(self):
         return "<Session>"
+    
+    def is_reliable(self) -> bool:
+        return False
 
     async def send(self, message: BaseModel):
         """

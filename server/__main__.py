@@ -18,7 +18,8 @@ from pydantic import BaseModel
 
 from .camera import CameraProcess, CameraFrameProvider
 from .networking import Session, TCPServer, UDPServer, handler, MessageHandler
-from .robot import serial_ports, find_serial_port, ArmProcess
+from .robot import serial_ports, find_serial_port, ArmProcess, ArmObservation
+from .util import get_next_numbered_dirname
 
 
 ####################################################################################################
@@ -43,17 +44,16 @@ class PoseStateMessage(BaseModel):
 ####################################################################################################
 
 class RobotArmServer(MessageHandler):
-    def __init__(self, tcp_port: int, udp_port: int, arm_process: ArmProcess, camera_process: CameraProcess, output_dir: str | None):
+    def __init__(self, tcp_port: int, udp_port: int, arm_process: ArmProcess, camera_process: CameraProcess, recording_dir: str | None):
         super().__init__()
         self.sessions = set()
         self._tcp_server = TCPServer(port=tcp_port, message_handler=self)
         self._udp_server = UDPServer(port=udp_port, message_handler=self)
         self._arm_process = arm_process
         self._camera_process = camera_process
-        self._output_dir = output_dir
-        self._output_idx = 0
-        if output_dir is not None:
-            os.makedirs(name=output_dir, exist_ok=True)
+        self._recording_dir = recording_dir
+        self._video_writer = None
+
         self._position = np.array([ 0, 5*2.54*1e-2, 9*2.54*1e-2 ])  # pretty close to 0 position
         arm_process.move_arm(
             position=self._position,
@@ -61,14 +61,19 @@ class RobotArmServer(MessageHandler):
             gripper_rotate_degrees=0
         )
         arm_process.set_camera_frame_provider(provider=CameraFrameProvider())
-
-    def _save_frame(self, frame: np.ndarray | None):
-        if frame is None or self._output_dir is None:
+  
+    def _record_observation(self, observation: ArmObservation):
+        if self._recording_dir is None:
             return
-        filepath = os.path.join(self._output_dir, f"frame_{self._output_idx:04d}.png")
-        cv2.imwrite(filename=filepath, img=frame)
-        self._output_idx += 1
-    
+        if self._video_writer is None:
+            # Start new training example recording session
+            dir = get_next_numbered_dirname(prefix="example", root_dir=self._recording_dir)
+            os.makedirs(name=dir, exist_ok=True)
+            video_filepath = os.path.join(dir, "video.mp4")
+            self._video_writer = cv2.VideoWriter(filename=video_filepath, fourcc=cv2.VideoWriter_fourcc(*"mp4v"), fps=20.0, frameSize=(640,480))
+            print(f"Writing observations to {dir}...")
+        self._video_writer.write(image=observation.frame)   # latency of this call is ~2ms
+
     async def run(self):
         await asyncio.gather(self._tcp_server.run(), self._udp_server.run())
     
@@ -80,6 +85,11 @@ class RobotArmServer(MessageHandler):
     async def on_disconnect(self, session: Session):
         print("Disconnected from: %s" % session.remote_endpoint)
         self.sessions.remove(session)
+
+        # Finish recording session if one in progress
+        if self._video_writer is not None:
+            self._video_writer.release()
+            self._video_writer = None
     
     @handler(HelloMessage)
     async def handle_HelloMessage(self, session: Session, msg: HelloMessage, timestamp: float):
@@ -96,13 +106,13 @@ class RobotArmServer(MessageHandler):
         # Move arm if it is not busy
         if not self._arm_process.is_busy():
             position = self._position + delta_position
-            frame = self._arm_process.move_arm(
+            observation = self._arm_process.move_arm(
                 position=position,
                 gripper_open_amount=msg.gripperOpenAmount,
                 gripper_rotate_degrees=msg.gripperRotateDegrees,
                 wait_for_frame=True
             )
-            self._save_frame(frame=frame)
+            self._record_observation(observation=observation)
 
 
 ####################################################################################################
@@ -128,7 +138,7 @@ if __name__ == "__main__":
     parser.add_argument("--list-ports", action="store_true", help="List available serial ports and exit")
     parser.add_argument("--port", metavar="name", action="store", type=str, help="Serial port to use")
     parser.add_argument("--camera", metavar="index", action="store", type=int, help="Camera to use")
-    parser.add_argument("--save-to", metavar="directory", action="store", type=str, help="Save recorded data")
+    parser.add_argument("--record-to", metavar="directory", action="store", type=str, help="Save recorded data")
     options = parser.parse_args()
 
     port = get_serial_port()
@@ -136,7 +146,7 @@ if __name__ == "__main__":
     camera_process = CameraProcess(camera_idx=options.camera)
 
     tasks = []
-    server = RobotArmServer(tcp_port=8000, udp_port=8001, arm_process=arm_process, camera_process=camera_process, output_dir=options.save_to)
+    server = RobotArmServer(tcp_port=8000, udp_port=8001, arm_process=arm_process, camera_process=camera_process, recording_dir=options.record_to)
     loop = asyncio.new_event_loop()
     tasks.append(loop.create_task(server.run()))
     try:

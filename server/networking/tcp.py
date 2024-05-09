@@ -30,6 +30,9 @@ class TCPSession(Session):
 
     def __str__(self):
         return str(self.remote_endpoint)
+    
+    def is_reliable(self) -> bool:
+        return True
 
     async def send(self, message: BaseModel):
         """

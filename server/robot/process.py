@@ -9,8 +9,7 @@
 from dataclasses import dataclass
 from multiprocessing import Queue, Process
 from queue import Empty
-import time
-from typing import Callable, Dict, Type
+from typing import Callable, Dict, List, Type
 
 import numpy as np
 
@@ -54,9 +53,17 @@ _frame_provider: CameraFrameProvider | None = None
 class CommandFinishedResponse:
     error: str | None = None
     frame: np.ndarray | None = None
+    observed_motor_radians: List[float] | None = None
+    target_motor_radians: List[float] | None = None
 
     def succeeded(self):
         return self.error is None
+
+@dataclass
+class ArmObservation:
+    frame: np.ndarray
+    observed_motor_radians: List[float]
+    target_motor_radians: List[float]
     
 class ArmProcess:
     def __init__(self, serial_port: str):
@@ -94,13 +101,16 @@ class ArmProcess:
         self._command_queue.put(FrameProviderCommand(provider=provider))
         self._num_commands_in_progress += 1
     
-    def move_arm(self, position: np.ndarray, gripper_open_amount: float, gripper_rotate_degrees: float, wait_for_frame: bool = False) -> np.ndarray | None:
+    def move_arm(self, position: np.ndarray, gripper_open_amount: float, gripper_rotate_degrees: float, wait_for_frame: bool = False) -> ArmObservation | None:
         self._command_queue.put(MoveArmCommand(position=position, gripper_open_amount=gripper_open_amount, gripper_rotate_degrees=gripper_rotate_degrees))
         if wait_for_frame:
             while True:
                 response = self._try_get_response()
                 if response is not None:
-                    return response.frame
+                    if response.frame is not None and response.observed_motor_radians is not None and response.target_motor_radians is not None:
+                        return ArmObservation(frame=response.frame, observed_motor_radians=response.observed_motor_radians, target_motor_radians=response.target_motor_radians)
+                    else:
+                        break
         return None
 
     def _try_get_response(self) -> CommandFinishedResponse | None:
@@ -144,7 +154,7 @@ class ArmProcess:
         position[2] = max(0.0409, position[2])
 
         # Get current joint angles
-        motor_radians = arm.read_motor_radians()
+        current_motor_radians = arm.read_motor_radians()
 
         # Get current frame
         global _frame_provider
@@ -160,5 +170,10 @@ class ArmProcess:
         gripper_rotate_degrees = min(90.0, max(-90.0, command.gripper_rotate_degrees))
 
         # Apply to arm
-        arm.set_end_effector_target_position(target_position=position, initial_motor_radians=motor_radians, gripper_open_degrees=gripper_open_degrees, gripper_rotate_degrees=gripper_rotate_degrees)
+        target_motor_radians = arm.set_end_effector_target_position(target_position=position, initial_motor_radians=current_motor_radians, gripper_open_degrees=gripper_open_degrees, gripper_rotate_degrees=gripper_rotate_degrees)
+
+        # Write current motor angles (i.e., the follower observation) and the target motor angles
+        # (i.e., the leader actions that should be predicted) to response
+        response.observed_motor_radians = current_motor_radians
+        response.target_motor_radians = target_motor_radians
         response_queue.put(response)
