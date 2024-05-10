@@ -17,6 +17,7 @@ import numpy as np
 from pydantic import BaseModel
 
 from .camera import CameraProcess, CameraFrameProvider
+from .dataset import DatasetWriter
 from .networking import Session, TCPServer, UDPServer, handler, MessageHandler
 from .robot import serial_ports, find_serial_port, ArmProcess, ArmObservation
 from .util import get_next_numbered_dirname
@@ -52,7 +53,7 @@ class RobotArmServer(MessageHandler):
         self._arm_process = arm_process
         self._camera_process = camera_process
         self._recording_dir = recording_dir
-        self._video_writer = None
+        self._dataset_writer = self._new_dataset_writer()
 
         self._position = np.array([ 0, 5*2.54*1e-2, 9*2.54*1e-2 ])  # pretty close to 0 position
         arm_process.move_arm(
@@ -61,18 +62,20 @@ class RobotArmServer(MessageHandler):
             gripper_rotate_degrees=0
         )
         arm_process.set_camera_frame_provider(provider=CameraFrameProvider())
+
+    def _new_dataset_writer(self):
+        return DatasetWriter(recording_dir=self._recording_dir, dataset_prefix="example")
   
     def _record_observation(self, observation: ArmObservation):
-        if self._recording_dir is None:
-            return
-        if self._video_writer is None:
-            # Start new training example recording session
-            dir = get_next_numbered_dirname(prefix="example", root_dir=self._recording_dir)
-            os.makedirs(name=dir, exist_ok=True)
-            video_filepath = os.path.join(dir, "video.mp4")
-            self._video_writer = cv2.VideoWriter(filename=video_filepath, fourcc=cv2.VideoWriter_fourcc(*"mp4v"), fps=20.0, frameSize=(640,480))
-            print(f"Writing observations to {dir}...")
-        self._video_writer.write(image=observation.frame)   # latency of this call is ~2ms
+        self._dataset_writer.record_observation(
+            frame=observation.frame,
+            observed_motor_radians=observation.observed_motor_radians,
+            target_motor_radians=observation.target_motor_radians
+        )
+
+    def _finish_dataset(self):
+        self._dataset_writer.finish()
+        self._dataset_writer = self._new_dataset_writer()
 
     async def run(self):
         await asyncio.gather(self._tcp_server.run(), self._udp_server.run())
@@ -85,11 +88,7 @@ class RobotArmServer(MessageHandler):
     async def on_disconnect(self, session: Session):
         print("Disconnected from: %s" % session.remote_endpoint)
         self.sessions.remove(session)
-
-        # Finish recording session if one in progress
-        if self._video_writer is not None:
-            self._video_writer.release()
-            self._video_writer = None
+        self._finish_dataset()
     
     @handler(HelloMessage)
     async def handle_HelloMessage(self, session: Session, msg: HelloMessage, timestamp: float):

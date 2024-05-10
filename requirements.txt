@@ -2,3 +2,4 @@ ikpy[plot]
 pyserial
 dynamixel-sdk
 pydantic
+h5py
