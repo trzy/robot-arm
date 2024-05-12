@@ -78,11 +78,9 @@ class Teleoperation: ObservableObject {
 
     func resetToHomePose() {
         moving = false
-        _frameOriginPose = _lastPose
+        _frameOriginPose = nil
         _translationToOriginalFrame = .zero
-        if _frameOriginPose != nil {
-            _reliableConnection?.send(PoseStateMessage(gripperDeltaPosition: .zero, gripperOpenAmount: 0, gripperRotateDegrees: 0))
-        }
+        _reliableConnection?.send(PoseStateMessage(gripperDeltaPosition: .zero, gripperOpenAmount: 0, gripperRotateDegrees: 0))
     }
 
     func subscribeToEvents(from view: ARView) {
