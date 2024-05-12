@@ -92,10 +92,28 @@ class CameraProcess:
     
     @staticmethod
     def _run_display_window(fps: Synchronized, terminate: Synchronized):
+        cv2.namedWindow("Camera")
+        cv2.setMouseCallback("Camera", on_mouse)
         frame_provider = CameraFrameProvider()
         while not terminate.value:
             frame = frame_provider.get_frame_buffer().copy()
             cv2.putText(frame, "%1.0f" % fps.value, org = (50, 50), fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = 1, color = (0, 255, 255), thickness = 2, lineType = cv2.LINE_AA)
+            draw_calibration_target(frame=frame)
             cv2.imshow("Camera", frame)
             cv2.waitKey(1)
 
+def on_mouse(event, x, y, flags, param):
+    if event == cv2.EVENT_LBUTTONDOWN:
+        print(f"Calibration point: (x,y)=({x},{y})")
+
+def draw_calibration_target(frame: np.ndarray):
+    # These points were obtained by clicking on the camera window at corners of the robot arm base
+    path = [
+        (211,327),
+        (274,302),
+        (317,330),
+        (364,310)
+    ]
+    num_points = len(path)
+    for i in range(num_points - 1):
+        cv2.line(img=frame, pt1=path[i], pt2=path[i+1], color=(0, 255, 0), thickness=1)
