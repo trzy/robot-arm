@@ -16,7 +16,7 @@ from ..util import get_next_numbered_dirname
 
 
 class DatasetWriter:
-    def __init__(self, recording_dir: str, dataset_prefix: str):
+    def __init__(self, recording_dir: str | None, dataset_prefix: str):
         self._recording_dir = recording_dir
         self._prefix = dataset_prefix
         self._dataset_dir = None
@@ -29,6 +29,10 @@ class DatasetWriter:
         self.finish()
 
     def record_observation(self, frame: np.ndarray, observed_motor_radians: List[float], target_motor_radians: List[float]):
+        if self._recording_dir is None:
+            # No recording directory specified, do not record
+            return
+
         height, width, _ = frame.shape
         assert frame.dtype == np.uint8
 
