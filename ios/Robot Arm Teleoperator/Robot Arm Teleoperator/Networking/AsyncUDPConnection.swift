@@ -111,7 +111,6 @@ class AsyncUDPConnection: AsyncConnection {
 
     private func send(_ data: Data) {
         _connection.send(content: data, completion: .idempotent)
-        print("Sent \(data.count) bytes")
     }
 
     private func send(_ data: Data, completion: ((NWError?) -> Void)?) {

@@ -52,8 +52,17 @@ class Teleoperation: ObservableObject {
                     // frame
                     _translationToOriginalFrame += _positionLastTransmitted - currentPosition
                 }
+
+                if !oldValue {
+                    // On every stopped -> moving transition, send start-of-episode signal
+                    _reliableConnection?.send(BeginEpisodeMessage())
+                }
             } else {
                 _positionLastTransmitted = currentPosition
+                if oldValue {
+                    // On every moving -> stopped transition, send end-of-episode signal
+                    _reliableConnection?.send(EndEpisodeMessage())
+                }
             }
         }
     }

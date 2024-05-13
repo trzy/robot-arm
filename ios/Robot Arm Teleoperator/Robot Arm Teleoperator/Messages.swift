@@ -14,3 +14,11 @@ struct PoseStateMessage: JSONMessage {
     let gripperOpenAmount: Float
     let gripperRotateDegrees: Float
 }
+
+struct BeginEpisodeMessage: JSONMessage {
+    var unused: Int = 0 // Python server does not support empty message bodies
+}
+
+struct EndEpisodeMessage: JSONMessage {
+    var unused: Int = 0
+}
