@@ -88,7 +88,7 @@ class ArmProcess:
     def is_busy(self):
         # Purge response queue of any completed responses
         while self._try_get_response() is not None:
-            self._num_commands_in_progress -= 1
+            pass
 
         # Still busy?
         return self._num_commands_in_progress > 0
@@ -103,6 +103,7 @@ class ArmProcess:
     
     def move_arm(self, position: np.ndarray, gripper_open_amount: float, gripper_rotate_degrees: float, wait_for_frame: bool = False) -> ArmObservation | None:
         self._command_queue.put(MoveArmCommand(position=position, gripper_open_amount=gripper_open_amount, gripper_rotate_degrees=gripper_rotate_degrees))
+        self._num_commands_in_progress += 1
         if wait_for_frame:
             while True:
                 response = self._try_get_response()
@@ -115,7 +116,9 @@ class ArmProcess:
 
     def _try_get_response(self) -> CommandFinishedResponse | None:
         try:
-            return self._response_queue.get_nowait()
+            response = self._response_queue.get_nowait()
+            self._num_commands_in_progress -= 1
+            return response
         except Empty:
             return None
 
@@ -138,6 +141,7 @@ class ArmProcess:
     def _handle_frame_provider(arm: Arm, command: FrameProviderCommand, response_queue: Queue):
         global _frame_provider
         _frame_provider = command.provider
+        response_queue.put(CommandFinishedResponse())
 
     def _handle_reset_position(arm: Arm, command: ResetPoseCommand, response_queue: Queue):
         arm.set_motor_goals(degrees=[0,0,0,0,0], wait=command.wait_for_completion)
