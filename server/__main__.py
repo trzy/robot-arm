@@ -2,17 +2,15 @@
 # __main__.py
 # Bart Trzynadlowski
 #
-# Server main module. Listens for TCP connections from iPhone and controls the robot.
+# Server main module. Listens for TCP and UDP connections from iPhone and controls the robot.
 #
 
 from annotated_types import Len
 import argparse
 import asyncio
-import os
 import platform
-from typing import Annotated, Any, Dict, List, Tuple, Type
+from typing import Annotated, Any, Dict, List, Optional, Tuple, Type
 
-import cv2
 import numpy as np
 from pydantic import BaseModel
 
@@ -20,7 +18,6 @@ from .camera import CameraProcess, CameraFrameProvider
 from .dataset import DatasetWriter
 from .networking import Session, TCPServer, UDPServer, handler, MessageHandler
 from .robot import serial_ports, find_serial_port, ArmProcess, ArmObservation
-from .util import get_next_numbered_dirname
 
 
 ####################################################################################################
@@ -36,6 +33,12 @@ class PoseStateMessage(BaseModel):
     gripperDeltaPosition: Annotated[List[float], Len(min_length=3, max_length=3)]
     gripperOpenAmount: float
     gripperRotateDegrees: float
+
+class BeginEpisodeMessage(BaseModel):
+    unused: Optional[int | None] = None # dummy field because Pydantic doesn't support empty models
+
+class EndEpisodeMessage(BaseModel):
+    unused: Optional[int | None] = None
 
 
 ####################################################################################################
@@ -53,7 +56,7 @@ class RobotArmServer(MessageHandler):
         self._arm_process = arm_process
         self._camera_process = camera_process
         self._recording_dir = recording_dir
-        self._dataset_writer = self._new_dataset_writer()
+        self._dataset_writer = None
 
         self._position = np.array([ 0, 5*2.54*1e-2, 9*2.54*1e-2 ])  # pretty close to 0 position
         arm_process.move_arm(
@@ -67,15 +70,16 @@ class RobotArmServer(MessageHandler):
         return DatasetWriter(recording_dir=self._recording_dir, dataset_prefix="example")
   
     def _record_observation(self, observation: ArmObservation):
-        self._dataset_writer.record_observation(
-            frame=observation.frame,
-            observed_motor_radians=observation.observed_motor_radians,
-            target_motor_radians=observation.target_motor_radians
-        )
+        if self._dataset_writer is not None:
+            self._dataset_writer.record_observation(
+                frame=observation.frame,
+                observed_motor_radians=observation.observed_motor_radians,
+                target_motor_radians=observation.target_motor_radians
+            )
 
     def _finish_dataset(self):
         self._dataset_writer.finish()
-        self._dataset_writer = self._new_dataset_writer()
+        self._dataset_writer = None
 
     async def run(self):
         await asyncio.gather(self._tcp_server.run(), self._udp_server.run())
@@ -88,11 +92,24 @@ class RobotArmServer(MessageHandler):
     async def on_disconnect(self, session: Session):
         print("Disconnected from: %s" % session.remote_endpoint)
         self.sessions.remove(session)
-        self._finish_dataset()
     
     @handler(HelloMessage)
     async def handle_HelloMessage(self, session: Session, msg: HelloMessage, timestamp: float):
         print("Hello received: %s" % msg.message)
+
+    @handler(BeginEpisodeMessage)
+    async def handle_BeginEpisodeMessage(self, session: Session, msg: BeginEpisodeMessage, timestamp: float):
+        if self._recording_dir is not None:
+            if self._dataset_writer is None:
+                self._dataset_writer = self._new_dataset_writer()
+                print(f"Begin episode: {self._dataset_writer.directory}")
+    
+    @handler(EndEpisodeMessage)
+    async def handle_EndEpisodeMessage(self, session: Session, msg: EndEpisodeMessage, timestamp: float):
+        if self._dataset_writer is not None:
+            self._dataset_writer.finish()
+            self._dataset_writer = None
+            print("End episode")
     
     @handler(PoseStateMessage)
     async def handle_PoseStateMessage(self, session: Session, msg: PoseStateMessage, timestamp: float):

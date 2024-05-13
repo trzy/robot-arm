@@ -28,6 +28,13 @@ class DatasetWriter:
     def __del__(self):
         self.finish()
 
+    @property
+    def directory(self) -> str | None:
+        # Lazily get directory
+        if self._dataset_dir is None:
+            self._dataset_dir = get_next_numbered_dirname(prefix=self._prefix, root_dir=self._recording_dir)
+        return self._dataset_dir
+
     def record_observation(self, frame: np.ndarray, observed_motor_radians: List[float], target_motor_radians: List[float]):
         if self._recording_dir is None:
             # No recording directory specified, do not record
@@ -39,11 +46,10 @@ class DatasetWriter:
         if self._video_writer is None:
             # Lazily start new training example recording session when we actually get an 
             # observation
-            self._dataset_dir = get_next_numbered_dirname(prefix=self._prefix, root_dir=self._recording_dir)
-            os.makedirs(name=self._dataset_dir, exist_ok=True)
-            video_filepath = os.path.join(self._dataset_dir, "video.mp4")
+            os.makedirs(name=self.directory, exist_ok=True)
+            video_filepath = os.path.join(self.directory, "video.mp4")
             self._video_writer = cv2.VideoWriter(filename=video_filepath, fourcc=cv2.VideoWriter_fourcc(*"mp4v"), fps=30.0, frameSize=(width,height))
-            print(f"Writing observations to {self._dataset_dir}...")
+            print(f"Writing observations to {self.directory}...")
 
         # Write to mp4
         self._video_writer.write(image=frame)   # time taken by this call is ~2ms
@@ -71,7 +77,7 @@ class DatasetWriter:
             num_motors = len(self._observed_motor_radians_samples[0])
             num_observations = len(self._observed_motor_radians_samples)
             height, width, channels = self._frame_samples[0].shape
-            filepath = os.path.join(self._dataset_dir, "data.h5")
+            filepath = os.path.join(self.directory, "data.h5")
             with h5py.File(name=filepath, mode="w", rdcc_nbytes=1024**2*2) as root:
                 root.attrs['sim'] = False   # TODO: is this needed?
 
@@ -90,6 +96,6 @@ class DatasetWriter:
                 root["/observations/qvel"][...] = np.zeros((num_observations, num_motors))
                 root["/observations/images/top"][...] = self._frame_samples
                 root["/action"][...] = self._target_motor_radians_samples
-            print(f"Dataset written to {self._dataset_dir}")
+            print(f"Dataset written to {self.directory}")
 
 
