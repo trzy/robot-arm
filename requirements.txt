@@ -3,3 +3,4 @@ pyserial
 dynamixel-sdk
 pydantic
 h5py
+opencv-python
