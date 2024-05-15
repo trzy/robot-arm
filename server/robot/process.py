@@ -39,6 +39,14 @@ class MoveArmCommand:
     gripper_rotate_degrees: float
 
 @dataclass
+class SetMotorsCommand:
+    target_motor_radians: List[float]
+
+@dataclass
+class GetObservationCommand:
+    pass
+
+@dataclass
 class TerminateProcessCommand:
     pass
 
@@ -93,13 +101,19 @@ class ArmProcess:
         # Still busy?
         return self._num_commands_in_progress > 0
     
+    def wait_until_not_busy(self):
+        while self.is_busy():
+            pass
+    
     def reset_pose(self, wait_for_completion: bool = False):
         self._command_queue.put(ResetPoseCommand(wait_for_completion=wait_for_completion))
         self._num_commands_in_progress += 1
 
-    def set_camera_frame_provider(self, provider: CameraFrameProvider):
+    def set_camera_frame_provider(self, provider: CameraFrameProvider, wait_for_completion: bool = True):
         self._command_queue.put(FrameProviderCommand(provider=provider))
         self._num_commands_in_progress += 1
+        if wait_for_completion:
+            self.wait_until_not_busy()
     
     def move_arm(self, position: np.ndarray, gripper_open_amount: float, gripper_rotate_degrees: float, wait_for_frame: bool = False) -> ArmObservation | None:
         self._command_queue.put(MoveArmCommand(position=position, gripper_open_amount=gripper_open_amount, gripper_rotate_degrees=gripper_rotate_degrees))
@@ -114,6 +128,29 @@ class ArmProcess:
                         break
         return None
 
+    def set_motor_radians(self, target_motor_radians: List[float], wait_for_completion: bool = False) -> ArmObservation | None:
+        self._command_queue.put(SetMotorsCommand(target_motor_radians=target_motor_radians))
+        self._num_commands_in_progress += 1
+        if wait_for_completion:
+            while True:
+                response = self._try_get_response()
+                if response is not None:
+                    if response.frame is not None and response.observed_motor_radians is not None and response.target_motor_radians is not None:
+                        return ArmObservation(frame=response.frame, observed_motor_radians=response.observed_motor_radians, target_motor_radians=response.target_motor_radians)
+                    else:
+                        break
+        return None
+
+    def get_observation(self) -> ArmObservation | None:
+        self._command_queue.put(GetObservationCommand())
+        self._num_commands_in_progress += 1
+        while True:
+            response = self._try_get_response()
+            if response is not None:
+                assert response.frame is not None
+                assert response.observed_motor_radians is not None
+                return ArmObservation(frame=response.frame, observed_motor_radians=response.observed_motor_radians, target_motor_radians=[])
+
     def _try_get_response(self) -> CommandFinishedResponse | None:
         try:
             response = self._response_queue.get_nowait()
@@ -127,7 +164,9 @@ class ArmProcess:
         handler_by_command: Dict[Type, Callable] = {
             FrameProviderCommand: ArmProcess._handle_frame_provider,
             ResetPoseCommand: ArmProcess._handle_reset_position,
-            MoveArmCommand: ArmProcess._handle_move_arm
+            MoveArmCommand: ArmProcess._handle_move_arm,
+            SetMotorsCommand: ArmProcess._handle_set_motors,
+            GetObservationCommand: ArmProcess._handle_get_observation
         }
         while True:
             command = command_queue.get()
@@ -180,4 +219,23 @@ class ArmProcess:
         # (i.e., the leader actions that should be predicted) to response
         response.observed_motor_radians = current_motor_radians
         response.target_motor_radians = target_motor_radians
+        response_queue.put(response)
+    
+    def _handle_set_motors(arm: Arm, command: SetMotorsCommand, response_queue: Queue):
+        global _frame_provider
+        response = CommandFinishedResponse()
+        if _frame_provider:
+            response.frame = _frame_provider.get_frame_buffer()
+        response.target_motor_radians = command.target_motor_radians
+        arm.set_motor_goals(radians=command.target_motor_radians)
+        #TODO: how long to wait?
+        response.observed_motor_radians = arm.read_motor_radians()
+        response_queue.put(response)
+
+    def _handle_get_observation(arm: Arm, command: GetObservationCommand, response_queue: Queue):
+        global _frame_provider
+        response = CommandFinishedResponse()
+        if _frame_provider:
+            response.frame = _frame_provider.get_frame_buffer()
+        response.observed_motor_radians = arm.read_motor_radians()
         response_queue.put(response)
