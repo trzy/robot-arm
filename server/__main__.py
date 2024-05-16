@@ -98,7 +98,18 @@ class InferenceClient(MessageHandler):
 ####################################################################################################
 
 class RobotArmServer(MessageHandler):
-    def __init__(self, tcp_port: int, udp_port: int, arm_process: ArmProcess, camera_process: CameraProcess, infer: bool, recording_dir: str | None, replay_filepath: str | None, replay_hz: float):
+    def __init__(
+        self,
+        tcp_port: int,
+        udp_port: int,
+        arm_process: ArmProcess,
+        camera_process: CameraProcess,
+        infer: bool,
+        recording_dir: str | None,
+        replay_filepath: str | None,
+        replay_hz: float,
+        infer_on_replay: bool
+    ):
         super().__init__()
         self.sessions = set()
         self._inference_queue = asyncio.Queue()
@@ -111,6 +122,7 @@ class RobotArmServer(MessageHandler):
         self._dataset_writer = None
         self._replay_filepath = replay_filepath
         self._replay_hz = replay_hz
+        self._infer_on_replay = infer_on_replay
 
         self._position = np.array([ 0, 5*2.54*1e-2, 9*2.54*1e-2 ])  # pretty close to 0 position
         arm_process.move_arm(
@@ -143,20 +155,41 @@ class RobotArmServer(MessageHandler):
         await asyncio.gather(*tasks)
     
     async def _run_replay_and_inference(self):
-        # First, handle replay
-        if self._replay_filepath and self._replay_hz > 0:
+        # First, handle replay to robot
+        if self._replay_filepath and self._replay_hz > 0 and not self._infer_on_replay:
             await self._run_replay()
 
         # Next, perform inference
         if self._inference_client is None:
             return
         await asyncio.sleep(3)
-        while True:
-            observation = self._arm_process.get_observation()
-            await self._inference_client.send_observation(observation=observation)
-            msg = await self._inference_queue.get()
-            self._arm_process.set_motor_radians(target_motor_radians=msg.target_motor_radians)
-            await asyncio.sleep(0.1)
+        if self._infer_on_replay:
+            # Perform inference on replay data
+            if not (self._replay_filepath and self._replay_hz > 0):
+                return
+            dataset = read_dataset(filepath=self._replay_filepath)
+            print(f"Loaded replay data from {self._replay_filepath}")
+            print(f"Replaying and inferring...")
+            num_samples = len(dataset.frames)
+            for i in range(num_samples):
+                observation = ArmObservation(
+                    frame=dataset.frames[i],
+                    observed_motor_radians=dataset.observed_motor_radians[i],
+                    target_motor_radians=dataset.target_motor_radians[i]
+                )
+                await self._inference_client.send_observation(observation=observation)
+                msg = await self._inference_queue.get()
+                self._arm_process.set_motor_radians(target_motor_radians=msg.target_motor_radians)
+                await asyncio.sleep(0.1)
+            print("Finished replaying")
+        else:
+            # Perform inference on live input
+            while True:
+                observation = self._arm_process.get_observation()
+                await self._inference_client.send_observation(observation=observation)
+                msg = await self._inference_queue.get()
+                self._arm_process.set_motor_radians(target_motor_radians=msg.target_motor_radians)
+                await asyncio.sleep(0.1)
 
     async def _run_replay(self):
         dataset = read_dataset(filepath=self._replay_filepath)
@@ -242,7 +275,11 @@ if __name__ == "__main__":
     parser.add_argument("--infer", action="store_true", help="Run inference")
     parser.add_argument("--replay-from", metavar="file", type=str, help="Replay an episode captured in an hdf5 file")
     parser.add_argument("--replay-rate", metavar="hz", type=float, default=20, help="Rate (Hz) to replay episode at")
+    parser.add_argument("--infer-on-replay", action="store_true", help="Replay to inference server")
     options = parser.parse_args()
+
+    if options.infer_on_replay:
+        options.infer = True
 
     port = get_serial_port()
     arm_process = ArmProcess(serial_port=port)
@@ -257,7 +294,8 @@ if __name__ == "__main__":
         infer=options.infer,
         recording_dir=options.record_to,
         replay_filepath=options.replay_from,
-        replay_hz=options.replay_rate
+        replay_hz=options.replay_rate,
+        infer_on_replay=options.infer_on_replay == True
     )
     loop = asyncio.new_event_loop()
     tasks.append(loop.create_task(server.run()))
