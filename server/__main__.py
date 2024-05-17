@@ -189,7 +189,7 @@ class RobotArmServer(MessageHandler):
                 await self._inference_client.send_observation(observation=observation)
                 msg = await self._inference_queue.get()
                 self._arm_process.set_motor_radians(target_motor_radians=msg.target_motor_radians)
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0.1 / 2)
 
     async def _run_replay(self):
         dataset = read_dataset(filepath=self._replay_filepath)
