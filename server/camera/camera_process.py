@@ -109,10 +109,19 @@ def on_mouse(event, x, y, flags, param):
 def draw_calibration_target(frame: np.ndarray):
     # These points were obtained by clicking on the camera window at corners of the robot arm base
     path = [
-        (211,327),
-        (274,302),
-        (317,330),
-        (364,310)
+        # F.inc
+        # (211,327),
+        # (274,302),
+        # (317,330),
+        # (364,310)
+
+        # Apartment
+        (345,218),
+        (389,216),
+        (390,241),
+        (428,241),
+        (428,216),
+        (471,215)
     ]
     num_points = len(path)
     for i in range(num_points - 1):
