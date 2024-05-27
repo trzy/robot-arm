@@ -108,6 +108,7 @@ class RobotArmServer(MessageHandler):
         recording_dir: str | None,
         replay_filepath: str | None,
         replay_hz: float,
+        replay_observed: bool,
         infer_on_replay: bool
     ):
         super().__init__()
@@ -122,6 +123,7 @@ class RobotArmServer(MessageHandler):
         self._dataset_writer = None
         self._replay_filepath = replay_filepath
         self._replay_hz = replay_hz
+        self._replay_observed = replay_observed
         self._infer_on_replay = infer_on_replay
 
         self._position = np.array([ 0, 5*2.54*1e-2, 9*2.54*1e-2 ])  # pretty close to 0 position
@@ -197,7 +199,8 @@ class RobotArmServer(MessageHandler):
         print(f"Replaying at {self._replay_hz} Hz...")
         num_samples = len(dataset.frames)
         for i in range(num_samples):
-            self._arm_process.set_motor_radians(target_motor_radians=dataset.target_motor_radians[i])
+            motor_radians = dataset.observed_motor_radians[i] if self._replay_observed else dataset.target_motor_radians[i]
+            self._arm_process.set_motor_radians(target_motor_radians=motor_radians)
             await asyncio.sleep(1.0 / self._replay_hz)
         print("Finished replay")
     
@@ -275,6 +278,7 @@ if __name__ == "__main__":
     parser.add_argument("--infer", action="store_true", help="Run inference")
     parser.add_argument("--replay-from", metavar="file", type=str, help="Replay an episode captured in an hdf5 file")
     parser.add_argument("--replay-rate", metavar="hz", type=float, default=20, help="Rate (Hz) to replay episode at")
+    parser.add_argument("--replay-observed", action="store_true", help="Replay observed angles instead of commanded angles")
     parser.add_argument("--infer-on-replay", action="store_true", help="Replay to inference server")
     options = parser.parse_args()
 
@@ -295,6 +299,7 @@ if __name__ == "__main__":
         recording_dir=options.record_to,
         replay_filepath=options.replay_from,
         replay_hz=options.replay_rate,
+        replay_observed=options.replay_observed,
         infer_on_replay=options.infer_on_replay == True
     )
     loop = asyncio.new_event_loop()
