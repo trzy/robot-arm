@@ -83,8 +83,8 @@ if __name__ == "__main__":
                 with h5py.File(name=dest_file, mode="w", rdcc_nbytes=1024**2*2) as root:
                     root.attrs['sim'] = False   # TODO: is this needed?
                     follower = root.create_group("observations")
-                    qpos = follower.create_dataset(name="qpos", shape=qpos.shape)
-                    qvel = follower.create_dataset(name="qvel", shape=qvel.shape)
+                    follower.create_dataset(name="qpos", shape=qpos.shape)
+                    follower.create_dataset(name="qvel", shape=qvel.shape)
                     camera_images = follower.create_group("images")
                     camera_images.create_dataset(name="top", shape=images.shape, dtype="uint8", chunks=(1, *images.shape[1:]))
                     action = root.create_dataset(name="action", shape=actions.shape)
