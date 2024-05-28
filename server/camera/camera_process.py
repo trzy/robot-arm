@@ -76,7 +76,7 @@ class CameraProcess:
     def _run_frame_acquisition(camera_idx: int, fps: Synchronized, terminate: Synchronized):
         fps_calculator = FrameRateCalculator()
         memory = shared_memory.SharedMemory(name="camera_frame_buffer")
-        capture = cv2.VideoCapture(index=camera_idx, apiPreference=cv2.CAP_AVFOUNDATION)
+        capture = cv2.VideoCapture(index=camera_idx) #, apiPreference=cv2.CAP_AVFOUNDATION)
         capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
         capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
         while not terminate.value:
@@ -108,7 +108,7 @@ def on_mouse(event, x, y, flags, param):
 
 def draw_calibration_target(frame: np.ndarray):
     # These points were obtained by clicking on the camera window at corners of the robot arm base
-    path = [
+    robot_path = [
         # F.inc
         # (211,327),
         # (274,302),
@@ -116,20 +116,34 @@ def draw_calibration_target(frame: np.ndarray):
         # (364,310)
 
         # Apartment
-        # (345,218),
-        # (389,216),
-        # (390,241),
-        # (428,241),
-        # (428,216),
-        # (471,215),
-        (260,206),
-        (320,209),
-        (320,244),
-        (370,248),
-        (371,236),
-        (372,211),
-        (429,214)
+        # (260,206),
+        # (320,209),
+        # (320,244),
+        # (370,248),
+        # (371,236),
+        # (372,211),
+        # (429,214)
+
+        # F.inc w/ Windows laptop, demo day
+        (272,342),
+        (322,343),
+        (320,370),
+        (367,371),
+        (371,342),
+        (422,344),
     ]
-    num_points = len(path)
-    for i in range(num_points - 1):
-        cv2.line(img=frame, pt1=path[i], pt2=path[i+1], color=(0, 255, 0), thickness=1)
+    orange_bin_path = [
+        # F.inc w/ Windows laptop, demo day
+        (10,398),
+        (151,422)
+    ]
+    blue_bin_path = [
+        # F.inc w/ Windows laptop, demo day
+        (564,451),
+        (639,441)
+    ]
+    paths = [ robot_path, orange_bin_path, blue_bin_path ]
+    for path in paths:
+        num_points = len(path)
+        for i in range(num_points - 1):
+            cv2.line(img=frame, pt1=path[i], pt2=path[i+1], color=(0, 255, 0), thickness=1)
