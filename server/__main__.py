@@ -12,6 +12,7 @@ import base64
 import platform
 from typing import Annotated, Any, Dict, List, Optional, Tuple, Type
 
+import cv2
 import h5py
 import numpy as np
 from pydantic import BaseModel
@@ -59,7 +60,8 @@ class InferenceResponseMessage(BaseModel):
 class InferenceClient(MessageHandler):
     def __init__(self, queue: asyncio.Queue):
         super().__init__()
-        self._client = TCPClient(connect_to="47.33.18.169:8000", message_handler=self)
+        self._client = TCPClient(connect_to="10.0.0.73:8000", message_handler=self)
+        #self._client = TCPClient(connect_to="47.33.18.169:8000", message_handler=self)
         self._session: Session | None = None    # when connected, session to send on
         self._queue = queue
     
@@ -68,7 +70,9 @@ class InferenceClient(MessageHandler):
     
     async def send_observation(self, observation: ArmObservation):
         if self._session is not None:
-            frame_base64 = base64.b64encode(observation.frame.tobytes())
+            success, jpeg = cv2.imencode('.jpg', observation.frame)
+            jpeg_bytes = jpeg.tobytes() if success else bytes()
+            frame_base64 = base64.b64encode(jpeg_bytes)
             msg = InferenceRequestMessage(motor_radians=observation.observed_motor_radians, frame=frame_base64)
             await self._session.send(message=msg)
             print("Sent inference request")
