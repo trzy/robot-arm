@@ -15,7 +15,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-
         // Create the SwiftUI view that provides the window contents.
         let contentView = ContentView()
 
@@ -25,6 +24,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         self.window = window
         window.makeKeyAndVisible()
         return true
+    }
+
+    func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
+        // Prevent orientation from changing to landscape when phone tilted sideways
+        return .portrait
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
