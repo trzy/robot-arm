@@ -1,8 +1,14 @@
 #
-# robot.py
+# arm.py
 # Bart Trzynadlowski
 #
-# Robot controller. 
+# Robot arm controller.
+#
+# Notes
+# -----
+# - ikpy is slow.
+# - Setting the end effector position and returning the current frame data is a slow, blocking 
+#   operation. This and the arm process need to be rearchitected.
 #
 
 from enum import auto, Enum
@@ -220,7 +226,6 @@ class Arm:
         abs_pos = round(abs(radians) / pi * 2048)
         return 2048 + (abs_pos if radians >= 0 else -abs_pos)
 
-    #TODO: test that _position_to_radians(_radians_to_position(rads)) == rads
     @staticmethod
     def _position_to_radians(position: int) -> float:
         return (position - 2048.0) / 2048.0 * pi

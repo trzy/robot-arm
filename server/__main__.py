@@ -10,10 +10,9 @@ import argparse
 import asyncio
 import base64
 import platform
-from typing import Annotated, Any, Dict, List, Optional, Tuple, Type
+from typing import Annotated, List, Optional
 
 import cv2
-import h5py
 import numpy as np
 from pydantic import BaseModel
 
@@ -58,10 +57,9 @@ class InferenceResponseMessage(BaseModel):
 ####################################################################################################
 
 class InferenceClient(MessageHandler):
-    def __init__(self, queue: asyncio.Queue):
+    def __init__(self, queue: asyncio.Queue, endpoint: str):
         super().__init__()
-        self._client = TCPClient(connect_to="10.0.0.73:8000", message_handler=self)
-        #self._client = TCPClient(connect_to="47.33.18.169:8000", message_handler=self)
+        self._client = TCPClient(connect_to=endpoint, message_handler=self)
         self._session: Session | None = None    # when connected, session to send on
         self._queue = queue
     
@@ -109,6 +107,7 @@ class RobotArmServer(MessageHandler):
         arm_process: ArmProcess,
         camera_process: CameraProcess,
         infer: bool,
+        inference_endpoint: str,
         recording_dir: str | None,
         replay_filepath: str | None,
         replay_hz: float,
@@ -118,7 +117,7 @@ class RobotArmServer(MessageHandler):
         super().__init__()
         self.sessions = set()
         self._inference_queue = asyncio.Queue()
-        self._inference_client = InferenceClient(queue=self._inference_queue) if infer else None
+        self._inference_client = InferenceClient(queue=self._inference_queue, endpoint=inference_endpoint) if infer else None
         self._tcp_server = TCPServer(port=tcp_port, message_handler=self)
         self._udp_server = UDPServer(port=udp_port, message_handler=self)
         self._arm_process = arm_process
@@ -280,6 +279,7 @@ if __name__ == "__main__":
     parser.add_argument("--camera", metavar="index", action="store", type=int, help="Camera to use")
     parser.add_argument("--record-to", metavar="directory", action="store", type=str, help="Save recorded data")
     parser.add_argument("--infer", action="store_true", help="Run inference")
+    parser.add_argument("--inference-endpoint", action="store", type=str, default="10.0.0.73:8000", help="Endpoint (host:port) of inference server")
     parser.add_argument("--replay-from", metavar="file", type=str, help="Replay an episode captured in an hdf5 file")
     parser.add_argument("--replay-rate", metavar="hz", type=float, default=20, help="Rate (Hz) to replay episode at")
     parser.add_argument("--replay-observed", action="store_true", help="Replay observed angles instead of commanded angles")
@@ -296,10 +296,11 @@ if __name__ == "__main__":
     tasks = []
     server = RobotArmServer(
         tcp_port=8000,
-        udp_port=8001,
+        udp_port=8001,  # TCP port + 1
         arm_process=arm_process,
         camera_process=camera_process,
         infer=options.infer,
+        inference_endpoint=options.inference_endpoint,
         recording_dir=options.record_to,
         replay_filepath=options.replay_from,
         replay_hz=options.replay_rate,

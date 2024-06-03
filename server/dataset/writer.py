@@ -77,19 +77,19 @@ class DatasetWriter:
             num_motors = len(self._observed_motor_radians_samples[0])
             num_observations = len(self._observed_motor_radians_samples)
             height, width, channels = self._frame_samples[0].shape
-            filepath = os.path.join(self.directory, "data.h5")
+            filepath = os.path.join(self.directory, "data.hdf5")
             with h5py.File(name=filepath, mode="w", rdcc_nbytes=1024**2*2) as root:
                 root.attrs['sim'] = False   # TODO: is this needed?
 
                 # Follower data, including RGB images from camera, goes under /observations
                 follower = root.create_group("observations")
-                qpos = follower.create_dataset(name="qpos", shape=(num_observations, num_motors))
-                qvel = follower.create_dataset(name="qvel", shape=(num_observations, num_motors))
+                follower.create_dataset(name="qpos", shape=(num_observations, num_motors))
+                follower.create_dataset(name="qvel", shape=(num_observations, num_motors))
                 camera_images = follower.create_group("images")
                 camera_images.create_dataset(name="top", shape=(num_observations, height, width, channels), dtype="uint8", chunks=(1, height, width, channels))
 
                 # Leader data, the motor commands at each time step
-                action = root.create_dataset(name="action", shape=(num_observations, num_motors))
+                root.create_dataset(name="action", shape=(num_observations, num_motors))
 
                 # Store the data we have accumulated
                 root["/observations/qpos"][...] = self._observed_motor_radians_samples
