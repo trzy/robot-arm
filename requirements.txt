@@ -1,6 +1,22 @@
+# Server
 ikpy[plot]
 pyserial
 dynamixel-sdk
 pydantic
 h5py
 opencv-python
+
+# ACT
+torch
+torchvision
+pyquaternion
+pyyaml
+rospkg
+pexpect
+mujoco==2.3.7
+dm_control==1.0.14
+matplotlib
+einops
+packaging
+ipython
+git+https://github.com/trzy/detr-for-low-cost-robot-arm.git
