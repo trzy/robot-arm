@@ -42,12 +42,13 @@ struct ContentView : View {
                                 }
                                 Text("\(String(format: "%1.1f", _translationScale))")
                             }
-                            /*
                             Toggle(
                                 "Free Rotate",
                                 isOn: $_gripperFreeRotation
                             )
-                             */
+                            .onChange(of: _gripperFreeRotation) { oldValue, newValue in
+                                teleoperation.gripperFreeRotation = newValue
+                            }
                             Spacer()
                         }
                         .frame(width: geometry.size.width / 2) // set slider width to half of display width

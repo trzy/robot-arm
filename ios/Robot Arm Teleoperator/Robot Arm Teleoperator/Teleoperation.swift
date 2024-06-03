@@ -76,6 +76,8 @@ class Teleoperation: ObservableObject {
         }
     }
 
+    var gripperFreeRotation = false
+
     var gripperOpen: Float = 0.0
     var gripperRotation: Float = 0.0
 
@@ -125,6 +127,13 @@ class Teleoperation: ObservableObject {
         let now = Date().timeIntervalSinceReferenceDate
         let timeSinceLastTransmission = now - _poseLastTransmittedAt
         guard timeSinceLastTransmission >= period else { return }
+
+        // If gripper rotation is based on phone orientation, update it now
+        if gripperFreeRotation {
+            let phoneUp = Vector3(x: pose.up.x, y: pose.up.y, z: 0)
+            let phoneForward = pose.forward.xzProjected
+            gripperRotation = -Vector3.signedAngle(from: .up, to: phoneUp, axis: phoneForward)
+        }
 
         // Transmit update
         _lastPose = pose
