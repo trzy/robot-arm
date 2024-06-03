@@ -108,6 +108,8 @@ class Teleoperation: ObservableObject {
         moving = false
         _frameOriginPose = nil
         _translationToOriginalFrame = .zero
+        gripperOpen = 0
+        gripperRotation = 0
         _reliableConnection?.send(PoseStateMessage(gripperDeltaPosition: .zero, gripperOpenAmount: 0, gripperRotateDegrees: 0))
     }
 
