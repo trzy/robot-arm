@@ -10,7 +10,7 @@ import RealityKit
 import SwiftUI
 
 class Teleoperation: ObservableObject {
-    private let _host = "10.0.0.54"
+    private let _host = "10.104.196.14"
     private var _tasks: [Task<Void, Never>] = []
     private var _subscriptions: [Cancellable] = []
     private var _reliableConnection: (any AsyncConnection)?
