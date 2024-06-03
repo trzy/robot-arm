@@ -9,6 +9,7 @@ import Combine
 import RealityKit
 import SwiftUI
 
+@MainActor
 class Teleoperation: ObservableObject {
     private var _tasks: [Task<Void, Never>] = []
     private var _subscriptions: [Cancellable] = []
@@ -20,6 +21,8 @@ class Teleoperation: ObservableObject {
     private var _frameOriginPose: Matrix4x4?
     private var _translationToOriginalFrame: Vector3 = .zero
     private var _positionLastTransmitted: Vector3 = .zero
+
+    @Published private(set) var isConnected = false
 
     /// Set `true` to transmit poses to robot.
     @Published var moving: Bool = false {
@@ -83,6 +86,20 @@ class Teleoperation: ObservableObject {
         _tasks.append(Task {
             await runUnreliableConnectionTask()
         })
+
+        // On any change of endpoint, close existing connection to reconnect
+        _subscriptions.append(
+            Settings.shared.$host.sink(receiveValue: { [weak self] _ in
+                self?._reliableConnection?.close()
+                self?._unreliableConnection?.close()
+            })
+        )
+        _subscriptions.append(
+            Settings.shared.$port.sink(receiveValue: { [weak self] _ in
+                self?._reliableConnection?.close()
+                self?._unreliableConnection?.close()
+            })
+        )
     }
 
     func resetToHomePose() {
@@ -128,6 +145,7 @@ class Teleoperation: ObservableObject {
             do {
                 let connection = try await AsyncTCPConnection(host: Settings.shared.host, port: Settings.shared.port)
                 _reliableConnection = connection
+                isConnected = true
                 connection.send(HelloMessage(message: "Hello from iOS over TCP!"))
                 for try await receivedMessage in connection {
                     await handleMessage(receivedMessage, connection: connection)
@@ -136,6 +154,7 @@ class Teleoperation: ObservableObject {
                 log("Error: \(error.localizedDescription)")
             }
             _reliableConnection = nil
+            isConnected = false
             try? await Task.sleep(for: .seconds(5))
         }
     }
@@ -143,7 +162,7 @@ class Teleoperation: ObservableObject {
     private func runUnreliableConnectionTask() async {
         while true {
             do {
-                let connection = try await AsyncUDPConnection(host: Settings.shared.host, port: Settings.shared.port + 1)
+                let connection = try await AsyncUDPConnection(host: Settings.shared.host , port: Settings.shared.port + 1)
                 _unreliableConnection = connection
                 connection.send(HelloMessage(message: "Hello from iOS over UDP!"))
                 for try await receivedMessage in connection {

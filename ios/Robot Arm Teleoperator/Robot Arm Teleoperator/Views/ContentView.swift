@@ -73,14 +73,18 @@ struct ContentView : View {
                         Label("Home Pose", systemImage: "house.circle")
                             .font(.title)
                     }
+                    .disabled(!teleoperation.isConnected)
 
                     // Gripper control regions
                     ZStack {
                         Rectangle()
-                            .fill(.purple.opacity(0.5))
+                            .fill(color(.purple))
                             .onHorizontalDrag { started, startPosition, currentPosition in
                                 // Incrementally rotate the gripper based on graction of view width
                                 // swiped
+                                if !teleoperation.isConnected {
+                                    return
+                                }
                                 if started {
                                     _initialGripperRotationValue.wrappedValue = teleoperation.gripperRotation
                                 } else {
@@ -94,10 +98,13 @@ struct ContentView : View {
 
                     ZStack {
                         Rectangle()
-                            .fill(.blue.opacity(0.5))
+                            .fill(color(.blue))
                             .onHorizontalDrag { started, startPosition, currentPosition in
                                 // Incrementally move the gripper based on fraction of view width
                                 // swiped
+                                if !teleoperation.isConnected {
+                                    return
+                                }
                                 if started {
                                     _initialGripperOpenValue.wrappedValue = teleoperation.gripperOpen
                                 } else {
@@ -111,15 +118,21 @@ struct ContentView : View {
 
                     ZStack {
                         Rectangle()
-                            .fill((teleoperation.moving ? Color.red : Color.green).opacity(0.5))
+                            .fill(color(teleoperation.moving ? Color.red : .green))
                             .onTouchDown {
-                                teleoperation.moving = !teleoperation.moving
+                                if teleoperation.isConnected {
+                                    teleoperation.moving = !teleoperation.moving
+                                }
                             }
                         Text(teleoperation.moving ? "Stop" : "Move")
                     }
                 }
             }
         }
+    }
+
+    private func color(_ color: Color) -> Color {
+        return (teleoperation.isConnected ? color : .gray).opacity(0.5)
     }
 }
 
