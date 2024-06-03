@@ -10,7 +10,6 @@ import RealityKit
 import SwiftUI
 
 class Teleoperation: ObservableObject {
-    private let _host = "10.104.196.14"
     private var _tasks: [Task<Void, Never>] = []
     private var _subscriptions: [Cancellable] = []
     private var _reliableConnection: (any AsyncConnection)?
@@ -127,7 +126,7 @@ class Teleoperation: ObservableObject {
     private func runReliableConnectionTask() async {
         while true {
             do {
-                let connection = try await AsyncTCPConnection(host: _host, port: 8000)
+                let connection = try await AsyncTCPConnection(host: Settings.shared.host, port: Settings.shared.port)
                 _reliableConnection = connection
                 connection.send(HelloMessage(message: "Hello from iOS over TCP!"))
                 for try await receivedMessage in connection {
@@ -144,7 +143,7 @@ class Teleoperation: ObservableObject {
     private func runUnreliableConnectionTask() async {
         while true {
             do {
-                let connection = try await AsyncUDPConnection(host: _host, port: 8001)
+                let connection = try await AsyncUDPConnection(host: Settings.shared.host, port: Settings.shared.port + 1)
                 _unreliableConnection = connection
                 connection.send(HelloMessage(message: "Hello from iOS over UDP!"))
                 for try await receivedMessage in connection {

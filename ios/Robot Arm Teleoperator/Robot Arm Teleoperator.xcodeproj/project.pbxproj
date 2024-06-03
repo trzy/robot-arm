@@ -29,6 +29,9 @@
 		CC7687252BE98765001B042F /* ConnectionError.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC7687242BE98765001B042F /* ConnectionError.swift */; };
 		CC7687272BE98A42001B042F /* HexDump.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC7687262BE98A42001B042F /* HexDump.swift */; };
 		CC76872B2BE994D4001B042F /* AsyncConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC76872A2BE994D4001B042F /* AsyncConnection.swift */; };
+		CC78707D2C0D94F900624210 /* ServerConfigurationSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC78707C2C0D94F900624210 /* ServerConfigurationSheetView.swift */; };
+		CC78707F2C0D982300624210 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC78707E2C0D982300624210 /* Settings.swift */; };
+		CC7870812C0D99C900624210 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = CC7870802C0D99C900624210 /* Settings.bundle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -74,6 +77,9 @@
 		CC7687242BE98765001B042F /* ConnectionError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionError.swift; sourceTree = "<group>"; };
 		CC7687262BE98A42001B042F /* HexDump.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexDump.swift; sourceTree = "<group>"; };
 		CC76872A2BE994D4001B042F /* AsyncConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncConnection.swift; sourceTree = "<group>"; };
+		CC78707C2C0D94F900624210 /* ServerConfigurationSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerConfigurationSheetView.swift; sourceTree = "<group>"; };
+		CC78707E2C0D982300624210 /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
+		CC7870802C0D99C900624210 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -104,6 +110,7 @@
 		CC0893C52BCF399B00D82209 = {
 			isa = PBXGroup;
 			children = (
+				CC7870802C0D99C900624210 /* Settings.bundle */,
 				CC0893D02BCF399B00D82209 /* Robot Arm Teleoperator */,
 				CC0893E12BCF399C00D82209 /* Robot Arm TeleoperatorTests */,
 				CC0893EB2BCF399C00D82209 /* Robot Arm TeleoperatorUITests */,
@@ -128,11 +135,11 @@
 				CC0894002BCF3A3D00D82209 /* Util */,
 				CC4510442BD06F270008AFE1 /* Views */,
 				CC0893D12BCF399B00D82209 /* AppDelegate.swift */,
-				CC0893D32BCF399B00D82209 /* ContentView.swift */,
 				CC0894092BCF3E6000D82209 /* Teleoperation.swift */,
 				CC08940B2BCF3EF000D82209 /* Messages.swift */,
 				CC0893D52BCF399C00D82209 /* Assets.xcassets */,
 				CC0893D72BCF399C00D82209 /* Preview Content */,
+				CC78707E2C0D982300624210 /* Settings.swift */,
 			);
 			path = "Robot Arm Teleoperator";
 			sourceTree = "<group>";
@@ -190,8 +197,10 @@
 		CC4510442BD06F270008AFE1 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				CC0893D32BCF399B00D82209 /* ContentView.swift */,
 				CC4510452BD06F390008AFE1 /* OnTouch.swift */,
 				CC59A6D72BD9A7FC00BA5B57 /* NonReactiveState.swift */,
+				CC78707C2C0D94F900624210 /* ServerConfigurationSheetView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -301,6 +310,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CC0893D92BCF399C00D82209 /* Preview Assets.xcassets in Resources */,
+				CC7870812C0D99C900624210 /* Settings.bundle in Resources */,
 				CC0893D62BCF399C00D82209 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -335,6 +345,7 @@
 				CC7687232BE9866E001B042F /* AsyncUDPConnection.swift in Sources */,
 				CC0893D42BCF399B00D82209 /* ContentView.swift in Sources */,
 				CC0893FE2BCF39E300D82209 /* AsyncTCPConnection.swift in Sources */,
+				CC78707D2C0D94F900624210 /* ServerConfigurationSheetView.swift in Sources */,
 				CC0893D22BCF399B00D82209 /* AppDelegate.swift in Sources */,
 				CC0894062BCF3A6100D82209 /* simd_float4x4+Extensions.swift in Sources */,
 				CC76872B2BE994D4001B042F /* AsyncConnection.swift in Sources */,
@@ -343,6 +354,7 @@
 				CC59A6DA2BD9AA3200BA5B57 /* Clamp.swift in Sources */,
 				CC0894082BCF3A6100D82209 /* simd_quatf+Extensions.swift in Sources */,
 				CC0893FF2BCF39E300D82209 /* JSONMessage.swift in Sources */,
+				CC78707F2C0D982300624210 /* Settings.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

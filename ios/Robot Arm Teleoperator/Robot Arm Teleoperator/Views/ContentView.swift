@@ -12,7 +12,9 @@ import RealityKit
 struct ContentView : View {
     @StateObject var teleoperation = Teleoperation()
 
+    @State private var _showingServerConfigurationSheet = false
     @State private var _translationScale = 1.2
+    @State private var _gripperFreeRotation = false
     @State private var _initialGripperRotationValue = NonReactiveState<Float>(wrappedValue: 0)
     @State private var _initialGripperOpenValue = NonReactiveState<Float>(wrappedValue: 0)
 
@@ -40,19 +42,36 @@ struct ContentView : View {
                                 }
                                 Text("\(String(format: "%1.1f", _translationScale))")
                             }
+                            /*
+                            Toggle(
+                                "Free Rotate",
+                                isOn: $_gripperFreeRotation
+                            )
+                             */
                             Spacer()
                         }
                         .frame(width: geometry.size.width / 2) // set slider width to half of display width
 
                         VStack {
                             Button(action: {
-                                teleoperation.resetToHomePose()
+                                _showingServerConfigurationSheet.toggle()
                             }) {
-                                Label("Home Pose", systemImage: "house.circle")
-                                    .font(.title)
+                                Label("Server...", systemImage: "desktopcomputer")
+                            }
+                            .sheet(isPresented: $_showingServerConfigurationSheet) {
+                                ServerConfigurationSheetView(
+                                    isShowing: $_showingServerConfigurationSheet
+                                )
                             }
                             Spacer()
                         }
+                    }
+
+                    Button(action: {
+                        teleoperation.resetToHomePose()
+                    }) {
+                        Label("Home Pose", systemImage: "house.circle")
+                            .font(.title)
                     }
 
                     // Gripper control regions
