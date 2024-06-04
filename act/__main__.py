@@ -56,7 +56,13 @@ def main(options: Namespace):
         'camera_names': camera_names,
     }
 
-    train_dataloader, val_dataloader, stats, _ = load_data(dataset_dir=options.dataset_dir, num_episodes=262, camera_names=camera_names, batch_size_train=options.batch_size, batch_size_val=options.batch_size)
+    train_dataloader, val_dataloader, stats, _ = load_data(
+        dataset_dir=options.dataset_dir,
+        chunk_size=options.chunk_size,
+        camera_names=camera_names,
+        batch_size_train=options.batch_size,
+        batch_size_val=options.batch_size
+    )
 
     # Save dataset stats
     if not os.path.isdir(ckpt_dir):
