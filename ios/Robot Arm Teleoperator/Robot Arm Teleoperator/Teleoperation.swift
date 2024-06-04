@@ -173,7 +173,7 @@ class Teleoperation: ObservableObject {
     private func runUnreliableConnectionTask() async {
         while true {
             do {
-                let connection = try await AsyncUDPConnection(host: Settings.shared.host , port: Settings.shared.port + 1)
+                let connection = try await AsyncUDPConnection(host: Settings.shared.host , port: Settings.shared.port)
                 _unreliableConnection = connection
                 connection.send(HelloMessage(message: "Hello from iOS over UDP!"))
                 for try await receivedMessage in connection {
