@@ -121,8 +121,8 @@ class EpisodicDataset(torch.utils.data.Dataset):
             is_sim = root.attrs['sim']
 
             # Shape of a sub-episode
-            original_action_shape = root['/action'].shape
-            original_action_shape[0] = self.episodes.episode_length
+            complete_action_shape = root['/action'].shape
+            original_action_shape = (self.episodes.episode_length, complete_action_shape[1])    # sub-episode
 
             # Sample within our sub-episode randomly
             episode_start_idx = episode.start_idx
