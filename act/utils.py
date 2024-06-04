@@ -58,6 +58,8 @@ def get_example_episodes(dataset_dir: str, chunk_size: int) -> ExampleEpisodes:
     # Detect all episode files and find the minimum episode length
     min_length = 1e9
     dirs = get_example_dirs(dataset_dir=dataset_dir)
+    if len(dirs) == 0:
+        raise RuntimeError(f"No episode subdirectories (e.g., 'example-0', ...) found in {dataset_dir}")
     filepaths = []
     examples_too_short = []
     for i in range(len(dirs)):
@@ -75,6 +77,7 @@ def get_example_episodes(dataset_dir: str, chunk_size: int) -> ExampleEpisodes:
     
     # Chop up episodes into sub-episodes, each having min_length
     example_episodes: List[ExampleEpisode] = []
+    i = 0
     for filepath in filepaths:
         with h5py.File(name=filepath, mode="r") as fp:
             # Determine how many sub-episodes we need to create and what their start indices are
@@ -84,6 +87,8 @@ def get_example_episodes(dataset_dir: str, chunk_size: int) -> ExampleEpisodes:
             # Create a sub-episode for each
             for idx in start_indices:
                 example_episodes.append(ExampleEpisode(filepath=filepath, start_idx=idx))
+                print(f"Episode {i}: {filepath} at [{idx}:{idx+min_length}]")
+                i += 1
     
     # Return the example episodes we will train and validate on
     print(f"Found {len(example_episodes)} example episodes in {len(filepaths)} files")
@@ -105,7 +110,7 @@ class EpisodicDataset(torch.utils.data.Dataset):
         self.__getitem__(0) # initialize self.is_sim
 
     def __len__(self):
-        return len(self.episode_ids)
+        return len(self.episode_idxs)
 
     def __getitem__(self, index):
         sample_full_episode = False # hardcode
