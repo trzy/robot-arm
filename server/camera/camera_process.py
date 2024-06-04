@@ -110,39 +110,22 @@ def draw_calibration_target(frame: np.ndarray):
     # These points were obtained by clicking on the camera window at corners of the robot arm base
     robot_path = [
         # F.inc
-        # (211,327),
-        # (274,302),
-        # (317,330),
-        # (364,310)
-
-        # Apartment
-        # (260,206),
-        # (320,209),
-        # (320,244),
-        # (370,248),
-        # (371,236),
-        # (372,211),
-        # (429,214)
-
-        # F.inc w/ Windows laptop, demo day
-        (272,342),
-        (322,343),
-        (320,370),
-        (367,371),
-        (371,342),
-        (422,344),
+        (220,232),
+        (282,232),
+        (283,274),
+        (336,275),
+        (336,234),
+        (389,235)
     ]
-    orange_bin_path = [
-        # F.inc w/ Windows laptop, demo day
-        (10,398),
-        (151,422)
+    tape_path = [
+        # F.inc
+        (138,343),
+        (198,351),
+        (205,329),
+        (143,321),
+        (138,343)
     ]
-    blue_bin_path = [
-        # F.inc w/ Windows laptop, demo day
-        (564,451),
-        (639,441)
-    ]
-    paths = [ robot_path, orange_bin_path, blue_bin_path ]
+    paths = [ robot_path, tape_path ]
     for path in paths:
         num_points = len(path)
         for i in range(num_points - 1):
