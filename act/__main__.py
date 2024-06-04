@@ -1,3 +1,31 @@
+#
+# __main__.py
+# Bart Trzynadlowski
+#
+# ACT model training code. Adapted directly from the original ACT codebase: 
+# https://github.com/tonyzhaozh/act/
+#
+# Ingests datasets produced by the server module (see server/__main__.py), which are stored in
+# dataset directories as follows:
+#
+#   dataset_dir/example-0/
+#       data.hdf5
+#   dataset_dir/example-1/
+#       data.hdf5
+#   ...
+#
+# Usage:
+#
+#   - To train using the default hyperparameters using a dataset named "cube" with checkpoints
+#     output to "cube/checkpoints":
+#
+#       python -m act --dataset-dir=cube --checkpoint-dir=cube/checkpoints
+#
+#   - Increasing the batch size to 64 and learning rate to 5e-5:
+#
+#       python -m act --dataset-dir=cube --checkpoint-dir=cube/checkpoints --batch-size-64 --lr=5e-5
+#
+
 import argparse
 from argparse import Namespace
 from copy import deepcopy
@@ -202,7 +230,7 @@ if __name__ == '__main__':
 
     # File source and destination
     parser.add_argument('--checkpoint-dir', action='store', type=str, help='Directory to write checkpoints to', required=True)
-    parser.add_argument('--dataset-dir', action='store', type=str, help='Directory from which to read episodes (i.e., dataset_dir/episode_*/data.hdf5)', required=True)
+    parser.add_argument('--dataset-dir', action='store', type=str, help='Directory from which to read episodes (i.e., dataset_dir/example-*/data.hdf5)', required=True)
 
     # Training parameters
     parser.add_argument('--policy-class', action='store', type=str, default="ACT", help='Policy class: ACT or CNNMLP')
