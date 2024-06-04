@@ -304,7 +304,7 @@ if __name__ == "__main__":
     parser.add_argument("--server-port", metavar="number", action="store", type=int, default=8000, help="Server port (for both TCP and UDP)")
     parser.add_argument("--record-to", metavar="directory", action="store", type=str, help="Save recorded data")
     parser.add_argument("--infer", action="store_true", help="Run inference")
-    parser.add_argument("--inference-endpoint", action="store", type=str, default="10.0.0.73:8000", help="Endpoint (host:port) of inference server")
+    parser.add_argument("--inference-endpoint", action="store", type=str, default="localhost:8001", help="Endpoint (host:port) of inference server")
     parser.add_argument("--replay-from", metavar="file", type=str, help="Replay an episode captured in an hdf5 file")
     parser.add_argument("--replay-rate", metavar="hz", type=float, default=20, help="Rate (Hz) to replay episode at")
     parser.add_argument("--replay-observed", action="store_true", help="Replay observed angles instead of commanded angles")
