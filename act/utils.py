@@ -120,32 +120,29 @@ class EpisodicDataset(torch.utils.data.Dataset):
         with h5py.File(episode.filepath, 'r') as root:
             is_sim = root.attrs['sim']
 
-            # Get the sub-episode, not the whole episode. Episodes are variable length but we
-            # chopped them up into a series of sub-episodes virtually (without actually modifying
-            # the files, just retaining indices to their starting points).
-            action_samples = root['/action'][episode.start_idx : episode.start_idx + self.episodes.episode_length]
-            qpos_samples = root['/observations/qpos'][episode.start_idx : episode.start_idx + self.episodes.episode_length]
-            image_samples_by_cam_name = { cam_name: root[f'/observations/images/{cam_name}'][episode.start_idx : episode.start_idx + self.episodes.episode_length] for cam_name in self.camera_names }
+            # Shape of a sub-episode
+            original_action_shape = root['/action'].shape
+            original_action_shape[0] = self.episodes.episode_length
 
             # Sample within our sub-episode randomly
-            original_action_shape = action_samples.shape
+            episode_start_idx = episode.start_idx
+            episode_end_idx = episode_start_idx + self.episodes.episode_length
             episode_len = original_action_shape[0]
             if sample_full_episode:
-                start_ts = 0
+                start_ts = episode_start_idx
             else:
                 start_ts = np.random.choice(episode_len)
             # get observation at start_ts only
-            qpos = qpos_samples[start_ts]
+            qpos = root['/observations/qpos'][episode_start_idx + start_ts]
             image_dict = dict()
             for cam_name in self.camera_names:
-                image_samples = image_samples_by_cam_name[cam_name]
-                image_dict[cam_name] = image_samples[start_ts]
+                image_dict[cam_name] = root[f'/observations/images/{cam_name}'][episode_start_idx + start_ts]
             # get all actions after and including start_ts
             if is_sim:
-                action = action_samples[start_ts:]
+                action = root['/action'][episode_start_idx + start_ts : episode_end_idx]
                 action_len = episode_len - start_ts
             else:
-                action = action_samples[max(0, start_ts - 1):] # hack, to make timesteps more aligned
+                action = root['/action'][episode_start_idx + max(0, start_ts - 1) : episode_end_idx] # hack, to make timesteps more aligned
                 action_len = episode_len - max(0, start_ts - 1) # hack, to make timesteps more aligned
 
         self.is_sim = is_sim
