@@ -2,7 +2,31 @@
 # __main__.py
 # Bart Trzynadlowski
 #
-# Server main module. Listens for TCP and UDP connections from iPhone and controls the robot.
+# Server main module. Listens for TCP and UDP connections from iPhone and controls the robot,
+# records example episodes, and performs inference if requested.
+#
+# Usage:
+#
+#   - To discover serial ports on which robot may be connected:
+#
+#       python -m server --list-serial-ports
+#
+#   - Serial ports can be specified with wildcards. To e.g. connect to the first connected USB port
+#     on macOS:
+#
+#       python -m server --serial-port=*usb*
+#
+#   - Recording episodes to the "cube" subdirectory and using a different camera:
+#
+#       python -m server --serial-port=COM4 --camera=1 --record-to=cube
+#
+#   - Replay captured actions from a particular episode to the robot:
+#
+#       python -m server --serial-port=COM4 --replay-from=cube/example-0/data.hdf5
+#
+#   - Perform inference:
+#
+#       python -m server --serial-port=COM4 --infer
 #
 
 from annotated_types import Len
@@ -263,10 +287,10 @@ def get_serial_port() -> str:
     if len(ports) == 0:
         print("No serial ports")
         exit()
-    if options.list_ports:
+    if options.list_serial_ports:
         print("\n".join(ports))
         exit()
-    port = ports[0] if options.port is None else find_serial_port(port_pattern=options.port)
+    port = ports[0] if options.serial_port is None else find_serial_port(port_pattern=options.serial_port)
     if port is None:
         exit()
     print(f"Serial port: {port}")
@@ -274,9 +298,10 @@ def get_serial_port() -> str:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("robotest")
-    parser.add_argument("--list-ports", action="store_true", help="List available serial ports and exit")
-    parser.add_argument("--port", metavar="name", action="store", type=str, help="Serial port to use")
+    parser.add_argument("--list-serial-ports", action="store_true", help="List available serial ports and exit")
+    parser.add_argument("--serial-port", metavar="name", action="store", type=str, help="Serial port to use")
     parser.add_argument("--camera", metavar="index", action="store", type=int, help="Camera to use")
+    parser.add_argument("--server-port", metavar="number", action="store", type=int, default=8000, help="Server port (for both TCP and UDP)")
     parser.add_argument("--record-to", metavar="directory", action="store", type=str, help="Save recorded data")
     parser.add_argument("--infer", action="store_true", help="Run inference")
     parser.add_argument("--inference-endpoint", action="store", type=str, default="10.0.0.73:8000", help="Endpoint (host:port) of inference server")
@@ -289,14 +314,14 @@ if __name__ == "__main__":
     if options.infer_on_replay:
         options.infer = True
 
-    port = get_serial_port()
-    arm_process = ArmProcess(serial_port=port)
+    serial_port = get_serial_port()
+    arm_process = ArmProcess(serial_port=serial_port)
     camera_process = CameraProcess(camera_idx=options.camera)
 
     tasks = []
     server = RobotArmServer(
-        tcp_port=8000,
-        udp_port=8001,  # TCP port + 1
+        tcp_port=options.server_port,
+        udp_port=options.server_port,
         arm_process=arm_process,
         camera_process=camera_process,
         infer=options.infer,

@@ -76,7 +76,7 @@ class CameraProcess:
     def _run_frame_acquisition(camera_idx: int, fps: Synchronized, terminate: Synchronized):
         fps_calculator = FrameRateCalculator()
         memory = shared_memory.SharedMemory(name="camera_frame_buffer")
-        capture = cv2.VideoCapture(index=camera_idx) #, apiPreference=cv2.CAP_AVFOUNDATION)
+        capture = cv2.VideoCapture(index=camera_idx)
         capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
         capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
         while not terminate.value:
