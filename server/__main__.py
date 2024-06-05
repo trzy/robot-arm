@@ -83,12 +83,20 @@ class InferenceResponseMessage(BaseModel):
 class InferenceClient(MessageHandler):
     def __init__(self, queue: asyncio.Queue, endpoint: str):
         super().__init__()
-        self._client = TCPClient(connect_to=endpoint, message_handler=self)
+        self._client: TCPClient | None
+        self._endpoint = endpoint
         self._session: Session | None = None    # when connected, session to send on
         self._queue = queue
+
+    def is_connected(self):
+        return self._session is not None
     
     async def run(self):
-        await self._client.run()
+        while True:
+            self._client = TCPClient(connect_to=self._endpoint, message_handler=self)
+            await self._client.run()
+            await asyncio.sleep(5)
+            print("Reconnecting to inference server...")
     
     async def send_observation(self, observation: ArmObservation):
         if self._session is not None:
@@ -107,6 +115,7 @@ class InferenceClient(MessageHandler):
     async def on_disconnect(self, session: Session):
         print("Disconnected from inference server: %s" % session.remote_endpoint)
         self._session = None
+        await self._queue.put(None) # send a None to indicate disconnected
     
     @handler(HelloMessage)
     async def handle_HelloMessage(self, session: Session, msg: HelloMessage, timestamp: float):
@@ -184,41 +193,48 @@ class RobotArmServer(MessageHandler):
         await asyncio.gather(*tasks)
     
     async def _run_replay_and_inference(self):
-        # First, handle replay to robot
-        if self._replay_filepath and self._replay_hz > 0 and not self._infer_on_replay:
-            await self._run_replay()
+        try:
+            # First, handle replay to robot
+            if self._replay_filepath and self._replay_hz > 0 and not self._infer_on_replay:
+                await self._run_replay()
 
-        # Next, perform inference
-        if self._inference_client is None:
-            return
-        await asyncio.sleep(3)
-        if self._infer_on_replay:
-            # Perform inference on replay data
-            if not (self._replay_filepath and self._replay_hz > 0):
+            # Next, perform inference
+            if self._inference_client is None:
                 return
-            dataset = read_dataset(filepath=self._replay_filepath)
-            print(f"Loaded replay data from {self._replay_filepath}")
-            print(f"Replaying and inferring...")
-            num_samples = len(dataset.frames)
-            for i in range(num_samples):
-                observation = ArmObservation(
-                    frame=dataset.frames[i],
-                    observed_motor_radians=dataset.observed_motor_radians[i],
-                    target_motor_radians=dataset.target_motor_radians[i]
-                )
-                await self._inference_client.send_observation(observation=observation)
-                msg = await self._inference_queue.get()
-                self._arm_process.set_motor_radians(target_motor_radians=msg.target_motor_radians)
-                await asyncio.sleep(0.1)
-            print("Finished replaying")
-        else:
-            # Perform inference on live input
-            while True:
-                observation = self._arm_process.get_observation()
-                await self._inference_client.send_observation(observation=observation)
-                msg = await self._inference_queue.get()
-                self._arm_process.set_motor_radians(target_motor_radians=msg.target_motor_radians)
-                await asyncio.sleep(0.1 / 2)
+            await asyncio.sleep(3)
+            if self._infer_on_replay:
+                # Perform inference on replay data
+                if not (self._replay_filepath and self._replay_hz > 0):
+                    return
+                dataset = read_dataset(filepath=self._replay_filepath)
+                print(f"Loaded replay data from {self._replay_filepath}")
+                print(f"Replaying and inferring...")
+                num_samples = len(dataset.frames)
+                for i in range(num_samples):
+                    if self._inference_client.is_connected():
+                        observation = ArmObservation(
+                            frame=dataset.frames[i],
+                            observed_motor_radians=dataset.observed_motor_radians[i],
+                            target_motor_radians=dataset.target_motor_radians[i]
+                        )
+                        await self._inference_client.send_observation(observation=observation)
+                        msg: InferenceResponseMessage | None = await self._inference_queue.get()
+                        if msg is not None:
+                            self._arm_process.set_motor_radians(target_motor_radians=msg.target_motor_radians)
+                    await asyncio.sleep(0.1)
+                print("Finished replaying")
+            else:
+                # Perform inference on live input
+                while True:
+                    if self._inference_client.is_connected():
+                        observation = self._arm_process.get_observation()
+                        await self._inference_client.send_observation(observation=observation)
+                        msg: InferenceResponseMessage | None = await self._inference_queue.get()
+                        if msg is not None:
+                            self._arm_process.set_motor_radians(target_motor_radians=msg.target_motor_radians)
+                    await asyncio.sleep(0.1 / 2)
+        except Exception as e:
+            print(e)
 
     async def _run_replay(self):
         dataset = read_dataset(filepath=self._replay_filepath)
