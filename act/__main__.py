@@ -163,7 +163,6 @@ async def _infer(options: Namespace, input_queue: asyncio.Queue, output_queue: a
                 
                 if options.temporal_aggregation:
                     # Temporal aggregation code fixed by: @Mankaran32
-                    print(all_actions.shape)
                     all_actions = all_actions.squeeze(0).cpu().numpy()
                     all_time_actions[0:num_queries-1] = all_time_actions[1:]
                     all_time_actions[-1, :] = all_actions
