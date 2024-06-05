@@ -19,11 +19,16 @@
 #   - To train using the default hyperparameters using a dataset named "cube" with checkpoints
 #     output to "cube/checkpoints":
 #
-#       python -m act --dataset-dir=cube --checkpoint-dir=cube/checkpoints
+#       python -m act --train --dataset-dir=cube --checkpoint-dir=cube/checkpoints
 #
 #   - Increasing the batch size to 64 and learning rate to 5e-5:
 #
-#       python -m act --dataset-dir=cube --checkpoint-dir=cube/checkpoints --batch-size-64 --lr=5e-5
+#       python -m act --train --dataset-dir=cube --checkpoint-dir=cube/checkpoints --batch-size=64
+#       --lr=5e-5
+#
+#   - Performing inference on a checkpoint:
+#
+#       python -m act --infer --checkpoint-file=cube/checkpoints/policy_best.ckpt
 #
 
 import argparse
@@ -33,7 +38,6 @@ from copy import deepcopy
 from dataclasses import dataclass
 import os
 import pickle
-from typing import Any, Dict
 
 import cv2
 import torch
@@ -160,7 +164,7 @@ async def _infer(options: Namespace, input_queue: asyncio.Queue, output_queue: a
             else:
                 raise NotImplementedError
 
-            ### post-process actions
+            # Post-process actions
             raw_action = raw_action.squeeze(0).cpu().numpy()
             action = post_process_fn(raw_action)
             target_qpos = action
@@ -322,7 +326,7 @@ def plot_history(train_history, validation_history, num_epochs, ckpt_dir, seed):
 
 from annotated_types import Len
 import base64
-from typing import Annotated, Any, Dict, List, Optional, Tuple, Type
+from typing import Annotated, List
 
 from pydantic import BaseModel
 
