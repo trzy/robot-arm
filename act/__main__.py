@@ -100,6 +100,12 @@ def train(options: Namespace):
     print(f"Best ckpt, val loss {min_val_loss:.6f} @ epoch{best_epoch}")
 
 async def infer(options: Namespace, input_queue: asyncio.Queue, output_queue: asyncio.Queue):
+    try:
+        await _infer(options=options, input_queue=input_queue, output_queue=output_queue)
+    except Exception as e:
+        print(f"Error: {e}")
+
+async def _infer(options: Namespace, input_queue: asyncio.Queue, output_queue: asyncio.Queue):
     policy_class = options.policy_class.upper()
     policy_config = make_policy_config(options=options)
     policy = make_policy(policy_class=options.policy_class, policy_config=policy_config)
@@ -147,8 +153,8 @@ async def infer(options: Namespace, input_queue: asyncio.Queue, output_queue: as
                     print(f"t={t} infer (query_frequency={query_frequency})")
                     all_actions = policy(qpos, curr_image)
                 else:
-                    raw_action = all_actions[:, t % query_frequency]
                     print(f"t={t} sample {t%query_frequency}")
+                raw_action = all_actions[:, t % query_frequency]
             elif policy_class == "CNNMLP":
                 raw_action = policy(qpos, curr_image)
             else:
@@ -412,15 +418,15 @@ if __name__ == "__main__":
     # Validate
     options = parser.parse_args()
     if (not options.train and not options.infer) or (options.train and options.infer):
-        raise argparse.ArgumentError("Please specify either --train or --infer")
+        parser.error("Please specify either --train or --infer")
     if options.train:
         if not options.checkpoint_dir:
-            raise argparse.ArgumentError("--checkpoint-dir missing")
+            parser.error("--checkpoint-dir missing")
         if not options.dataset_dir:
-            raise argparse.ArgumentError("--dataset-dir missing")
+            parser.error("--dataset-dir missing")
     if options.infer:
         if not options.checkpoint_file:
-            raise argparse.ArgumentError("--checkpoint-file missing")
+            parser.error("--checkpoint-file missing")
 
     # Run task
     if options.train:
