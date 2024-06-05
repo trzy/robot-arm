@@ -93,10 +93,13 @@ class InferenceClient(MessageHandler):
     
     async def run(self):
         while True:
-            self._client = TCPClient(connect_to=self._endpoint, message_handler=self)
-            await self._client.run()
-            await asyncio.sleep(5)
-            print("Reconnecting to inference server...")
+            try:
+                self._client = TCPClient(connect_to=self._endpoint, message_handler=self)
+                await self._client.run()
+                await asyncio.sleep(5)
+                print("Reconnecting to inference server...")
+            except Exception as e:
+                print(f"Error in InferenceClient: {e}")
     
     async def send_observation(self, observation: ArmObservation):
         if self._session is not None:
@@ -234,7 +237,7 @@ class RobotArmServer(MessageHandler):
                             self._arm_process.set_motor_radians(target_motor_radians=msg.target_motor_radians)
                     await asyncio.sleep(0.1 / 2)
         except Exception as e:
-            print(e)
+            print(f"Error in replay/inference loop: {e}")
 
     async def _run_replay(self):
         dataset = read_dataset(filepath=self._replay_filepath)
