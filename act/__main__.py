@@ -132,11 +132,12 @@ async def _infer(options: Namespace, input_queue: asyncio.Queue, output_queue: a
 
     # How often to infer
     query_frequency = policy_config.num_queries
-    # if options.temporal_aggregation:
-    #     query_frequency = 1
-    #     num_queries = policy_config.num_queries
+    if options.temporal_aggregation:
+        query_frequency = 1
+    num_queries = policy_config.num_queries
     
     # Inference loop
+    all_time_actions = np.zeros((num_queries, num_queries, NUM_MOTORS))
     with torch.inference_mode():
         t = 0
         while True:
@@ -145,6 +146,7 @@ async def _infer(options: Namespace, input_queue: asyncio.Queue, output_queue: a
             if not isinstance(observation, Observation):
                 # Reset state
                 t = 0
+                all_time_actions = np.zeros(all_time_actions.shape)
                 continue
             qpos_numpy = observation.qpos
             curr_image = prepare_image(frame=observation.image)
@@ -158,14 +160,39 @@ async def _infer(options: Namespace, input_queue: asyncio.Queue, output_queue: a
                     all_actions = policy(qpos, curr_image)
                 else:
                     print(f"t={t} sample {t%query_frequency}")
-                raw_action = all_actions[:, t % query_frequency]
+                
+                if options.temporal_aggregation:
+                    # Temporal aggregation code fixed by: @Mankaran32
+                    print(all_actions.shape)
+                    all_actions = all_actions.squeeze(0).cpu().numpy()
+                    all_time_actions[0:num_queries-1] = all_time_actions[1:]
+                    all_time_actions[-1, :] = all_actions
+
+                    # Generate diagonal indices with offset
+                    diagonal_indices = np.arange(num_queries)
+
+                    # Add the offset to the diagonal indices
+                    diagonal_indices_with_offset = np.arange(num_queries)[::-1] 
+
+                    # Create a (50, NUM_MOTORS) array by extracting the diagonal elements with offset
+                    action_count = max(1, min(t, num_queries))
+                    actions_for_curr_step = all_time_actions[diagonal_indices_with_offset, diagonal_indices][:action_count]
+
+                    k = 0.01
+                    exp_weights = np.exp(-k * np.arange(action_count))[::-1]
+                    exp_weights = exp_weights / exp_weights.sum()
+
+                    raw_action = (actions_for_curr_step * exp_weights.reshape(-1, 1)).sum(axis=0)
+                else:
+                    raw_action = all_actions[:, t % query_frequency]
+                    raw_action = raw_action.squeeze(0).cpu().numpy()
             elif policy_class == "CNNMLP":
                 raw_action = policy(qpos, curr_image)
+                raw_action = raw_action.squeeze(0).cpu().numpy()
             else:
                 raise NotImplementedError
 
             # Post-process actions
-            raw_action = raw_action.squeeze(0).cpu().numpy()
             action = post_process_fn(raw_action)
             target_qpos = action
 
