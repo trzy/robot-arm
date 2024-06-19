@@ -2,7 +2,7 @@
 # __main__.py
 # Bart Trzynadlowski
 #
-# ACT model training code. Adapted directly from the original ACT codebase: 
+# ACT model training code. Adapted directly from the original ACT codebase:
 # https://github.com/tonyzhaozh/act/
 #
 # Ingests datasets produced by the server module (see server/__main__.py), which are stored in
@@ -54,9 +54,7 @@ from .policy import ACTPolicy, CNNMLPPolicy
 # Constants
 ####################################################################################################
 
-
 NUM_MOTORS = 5              # robot has 5 motors
-CAMERA_NAMES = [ "top" ]    # single camera (for now)
 
 
 ####################################################################################################
@@ -69,24 +67,23 @@ class Observation:
     image: np.ndarray
 
 def train(options: Namespace):
+    train_dataloader, val_dataloader, stats, _, camera_names = load_data(
+        dataset_dir=options.dataset_dir,
+        chunk_size=options.chunk_size,
+        batch_size_train=options.batch_size,
+        batch_size_val=options.batch_size
+    )
+
     config = {
         "num_epochs": options.num_epochs,
         "ckpt_dir": options.checkpoint_dir,
         "state_dim": NUM_MOTORS,
         "lr": options.lr,
         "policy_class": options.policy_class,
-        "policy_config": make_policy_config(options=options),
+        "policy_config": make_policy_config(options=options, camera_names=camera_names),
         "seed": options.seed,
-        "camera_names": CAMERA_NAMES,
+        "camera_names": camera_names,
     }
-
-    train_dataloader, val_dataloader, stats, _ = load_data(
-        dataset_dir=options.dataset_dir,
-        chunk_size=options.chunk_size,
-        camera_names=CAMERA_NAMES,
-        batch_size_train=options.batch_size,
-        batch_size_val=options.batch_size
-    )
 
     # Save dataset stats
     if not os.path.isdir(options.checkpoint_dir):
@@ -109,11 +106,14 @@ async def infer(options: Namespace, input_queue: asyncio.Queue, output_queue: as
     except Exception as e:
         print(f"Error: {e}")
 
+def get_camera_names(num_cameras: int):
+    return [ f"cam{i}" for i in range(num_cameras) ]
+
 async def _infer(options: Namespace, input_queue: asyncio.Queue, output_queue: asyncio.Queue):
     policy_class = options.policy_class.upper()
-    policy_config = make_policy_config(options=options)
+    policy_config = make_policy_config(options=options, camera_names=get_camera_names(num_cameras=options.num_cameras))
     policy = make_policy(policy_class=options.policy_class, policy_config=policy_config)
-    
+
     # Load checkpoint
     loading_status = policy.load_state_dict(torch.load(options.checkpoint_file))
     print(loading_status)
@@ -135,7 +135,7 @@ async def _infer(options: Namespace, input_queue: asyncio.Queue, output_queue: a
     if options.temporal_aggregation:
         query_frequency = 1
     num_queries = policy_config.num_queries
-    
+
     # Inference loop
     all_time_actions = np.zeros((num_queries, num_queries, NUM_MOTORS))
     with torch.inference_mode():
@@ -160,7 +160,7 @@ async def _infer(options: Namespace, input_queue: asyncio.Queue, output_queue: a
                     all_actions = policy(qpos, curr_image)
                 else:
                     print(f"t={t} sample {t%query_frequency}")
-                
+
                 if options.temporal_aggregation:
                     # Temporal aggregation code fixed by: @Mankaran32
                     all_actions = all_actions.squeeze(0).cpu().numpy()
@@ -171,7 +171,7 @@ async def _infer(options: Namespace, input_queue: asyncio.Queue, output_queue: a
                     diagonal_indices = np.arange(num_queries)
 
                     # Add the offset to the diagonal indices
-                    diagonal_indices_with_offset = np.arange(num_queries)[::-1] 
+                    diagonal_indices_with_offset = np.arange(num_queries)[::-1]
 
                     # Create a (50, NUM_MOTORS) array by extracting the diagonal elements with offset
                     action_count = max(1, min(t, num_queries))
@@ -206,7 +206,7 @@ def prepare_image(frame: np.ndarray) -> torch.Tensor:
     frame = np.stack([ frame ], axis=0)
     return torch.from_numpy(frame / 255.0).float().cuda().unsqueeze(0)
 
-def make_policy_config(options: Namespace) -> Namespace:
+def make_policy_config(options: Namespace, camera_names: List[str]) -> Namespace:
     policy_config = deepcopy(options)
     lr_backbone = 1e-5
     backbone = "resnet18"
@@ -220,12 +220,12 @@ def make_policy_config(options: Namespace) -> Namespace:
         setattr(policy_config, "enc_layers", enc_layers)
         setattr(policy_config, "dec_layers", dec_layers)
         setattr(policy_config, "nheads", nheads)
-        setattr(policy_config, "camera_names", CAMERA_NAMES)
+        setattr(policy_config, "camera_names", camera_names)
     elif options.policy_class == "CNNMLP":
         setattr(policy_config, "lr_backbone", lr_backbone)
         setattr(policy_config, "backbone", backbone)
         setattr(policy_config, "num_queries", 1)
-        setattr(policy_config, "camera_names", CAMERA_NAMES)
+        setattr(policy_config, "camera_names", camera_names)
     else:
         raise NotImplementedError
     return policy_config
@@ -438,6 +438,7 @@ if __name__ == "__main__":
 
     # Inference parameters
     parser.add_argument("--temporal-aggregation", action="store_true", help="Temporal aggregation")
+    parser.add_argument("--num-cameras", action="store", type=int, default=1, help="Number of cameras in inference mode")
 
     # Training and inference: ACT
     parser.add_argument("--kl-weight", action="store", type=int, default=10, help="ACT model KL weight")

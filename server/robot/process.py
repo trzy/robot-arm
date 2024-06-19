@@ -60,7 +60,7 @@ _frame_provider: CameraFrameProvider | None = None
 @dataclass
 class CommandFinishedResponse:
     error: str | None = None
-    frame: np.ndarray | None = None
+    frame: np.ndarray | None = None # shape (N,480,640,3)
     observed_motor_radians: List[float] | None = None
     target_motor_radians: List[float] | None = None
 
@@ -72,12 +72,12 @@ class ArmObservation:
     frame: np.ndarray
     observed_motor_radians: List[float]
     target_motor_radians: List[float]
-    
+
 class ArmProcess:
     def __init__(self, serial_port: str):
         self._command_queue = Queue()
         self._response_queue = Queue()
-        
+
         print("Starting robot arm process...")
         process_args = (
             self._command_queue,
@@ -87,7 +87,7 @@ class ArmProcess:
         self._process = Process(target=ArmProcess._run, args=process_args)
         self._process.start()
         self._num_commands_in_progress = 0
-    
+
     def __del__(self):
         self._command_queue.put(TerminateProcessCommand())
         self._process.join()
@@ -100,11 +100,11 @@ class ArmProcess:
 
         # Still busy?
         return self._num_commands_in_progress > 0
-    
+
     def wait_until_not_busy(self):
         while self.is_busy():
             pass
-    
+
     def reset_pose(self, wait_for_completion: bool = False):
         self._command_queue.put(ResetPoseCommand(wait_for_completion=wait_for_completion))
         self._num_commands_in_progress += 1
@@ -114,7 +114,7 @@ class ArmProcess:
         self._num_commands_in_progress += 1
         if wait_for_completion:
             self.wait_until_not_busy()
-    
+
     def move_arm(self, position: np.ndarray, gripper_open_amount: float, gripper_rotate_degrees: float, wait_for_frame: bool = False) -> ArmObservation | None:
         self._command_queue.put(MoveArmCommand(position=position, gripper_open_amount=gripper_open_amount, gripper_rotate_degrees=gripper_rotate_degrees))
         self._num_commands_in_progress += 1
@@ -185,11 +185,11 @@ class ArmProcess:
     def _handle_reset_position(arm: Arm, command: ResetPoseCommand, response_queue: Queue):
         arm.set_motor_goals(degrees=[0,0,0,0,0], wait=command.wait_for_completion)
         response_queue.put(CommandFinishedResponse())
-    
+
     def _handle_move_arm(arm: Arm, command: MoveArmCommand, response_queue: Queue):
         response = CommandFinishedResponse()
 
-        # Clamp vertical position so we don't hit table. 
+        # Clamp vertical position so we don't hit table.
         # Note: Kinematic chain seems to be set up wrong because 0.0409m is the height of motor 1
         # axis above origin point. If chain were set up correctly, 0 would be the table surface
         # position!
@@ -220,7 +220,7 @@ class ArmProcess:
         response.observed_motor_radians = current_motor_radians
         response.target_motor_radians = target_motor_radians
         response_queue.put(response)
-    
+
     def _handle_set_motors(arm: Arm, command: SetMotorsCommand, response_queue: Queue):
         global _frame_provider
         response = CommandFinishedResponse()

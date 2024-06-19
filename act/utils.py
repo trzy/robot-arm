@@ -26,6 +26,7 @@ class ExampleEpisode:
 class ExampleEpisodes:
     episode_length: int
     episodes: List[ExampleEpisode]
+    camera_names: List[str]
 
     def num_episodes(self) -> int:
         return len(self.episodes)
@@ -62,6 +63,7 @@ def get_example_episodes(dataset_dir: str, chunk_size: int) -> ExampleEpisodes:
         raise RuntimeError(f"No episode subdirectories (e.g., 'example-0', ...) found in {dataset_dir}")
     filepaths = []
     examples_too_short = []
+    camera_names: List[str] = []
     for i in range(len(dirs)):
         dir = dirs[i]
         filepath = os.path.join(dir, "data.hdf5")
@@ -71,10 +73,17 @@ def get_example_episodes(dataset_dir: str, chunk_size: int) -> ExampleEpisodes:
             min_length = min(min_length, length)
             if length < chunk_size:
                 examples_too_short.append(dir)
+            camera_names_this_file = list(fp["/observations/images"].keys())
+            if len(camera_names) == 0:
+                camera_names = camera_names_this_file
+            elif camera_names != camera_names_this_file:
+                raise RuntimeError(f"All example episodes must have the same number of cameras and cameras must have the same names. File {filepath} has {camera_names_this_file} but expected {camera_names}")
+    assert len(camera_names) > 0
+
     print(f"Minimum example episode length: {min_length}")
     if len(examples_too_short) > 0:
         raise RuntimeError(f"Example episode length must be greater than or equal to chunk_size {chunk_size}. Remove the following episodes that are too small and try again: {', '.join(examples_too_short)}")
-    
+
     # Chop up episodes into sub-episodes, each having min_length
     example_episodes: List[ExampleEpisode] = []
     i = 0
@@ -89,10 +98,10 @@ def get_example_episodes(dataset_dir: str, chunk_size: int) -> ExampleEpisodes:
                 example_episodes.append(ExampleEpisode(filepath=filepath, start_idx=idx))
                 print(f"Episode {i}: {filepath} at [{idx}:{idx+min_length}]")
                 i += 1
-    
+
     # Return the example episodes we will train and validate on
     print(f"Found {len(example_episodes)} example episodes in {len(filepaths)} files")
-    return ExampleEpisodes(episode_length=min_length, episodes=example_episodes)
+    return ExampleEpisodes(episode_length=min_length, episodes=example_episodes, camera_names=camera_names)
 
 
 ####################################################################################################
@@ -100,11 +109,11 @@ def get_example_episodes(dataset_dir: str, chunk_size: int) -> ExampleEpisodes:
 ####################################################################################################
 
 class EpisodicDataset(torch.utils.data.Dataset):
-    def __init__(self, episode_idxs, episodes: ExampleEpisodes, camera_names, norm_stats):
+    def __init__(self, episode_idxs, episodes: ExampleEpisodes, norm_stats):
         super(EpisodicDataset).__init__()
         self.episode_idxs = episode_idxs
         self.episodes = episodes
-        self.camera_names = camera_names
+        self.camera_names = episodes.camera_names
         self.norm_stats = norm_stats
         self.is_sim = None
         self.__getitem__(0) # initialize self.is_sim
@@ -205,7 +214,7 @@ def get_norm_stats(examples: ExampleEpisodes):
     return stats
 
 
-def load_data(dataset_dir: str, chunk_size: int, camera_names: List[str], batch_size_train: int, batch_size_val: int):
+def load_data(dataset_dir: str, chunk_size: int, batch_size_train: int, batch_size_val: int):
     # Detect examples
     print(f'\nData from: {dataset_dir}\n')
     examples = get_example_episodes(dataset_dir=dataset_dir, chunk_size=chunk_size)
@@ -220,12 +229,12 @@ def load_data(dataset_dir: str, chunk_size: int, camera_names: List[str], batch_
     norm_stats = get_norm_stats(examples=examples)
 
     # construct dataset and dataloader
-    train_dataset = EpisodicDataset(train_indices, examples, camera_names, norm_stats)
-    val_dataset = EpisodicDataset(val_indices, examples, camera_names, norm_stats)
+    train_dataset = EpisodicDataset(train_indices, examples, norm_stats)
+    val_dataset = EpisodicDataset(val_indices, examples, norm_stats)
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size_train, shuffle=True, pin_memory=True, num_workers=1, prefetch_factor=1)
     val_dataloader = DataLoader(val_dataset, batch_size=batch_size_val, shuffle=True, pin_memory=True, num_workers=1, prefetch_factor=1)
 
-    return train_dataloader, val_dataloader, norm_stats, train_dataset.is_sim
+    return train_dataloader, val_dataloader, norm_stats, train_dataset.is_sim, examples.camera_names
 
 
 ####################################################################################################

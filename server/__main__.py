@@ -40,7 +40,7 @@ import cv2
 import numpy as np
 from pydantic import BaseModel
 
-from .camera import CameraProcess, CameraFrameProvider
+from .camera import CameraProcess
 from .dataset import DatasetWriter, read_dataset
 from .networking import Session, TCPClient, TCPServer, UDPServer, handler, MessageHandler
 from .robot import serial_ports, find_serial_port, ArmProcess, ArmObservation
@@ -90,7 +90,7 @@ class InferenceClient(MessageHandler):
 
     def is_connected(self):
         return self._session is not None
-    
+
     async def run(self):
         while True:
             try:
@@ -100,7 +100,7 @@ class InferenceClient(MessageHandler):
                 print("Reconnecting to inference server...")
             except Exception as e:
                 print(f"Error in InferenceClient: {e}")
-    
+
     async def send_observation(self, observation: ArmObservation):
         if self._session is not None:
             success, jpeg = cv2.imencode('.jpg', observation.frame)
@@ -114,16 +114,16 @@ class InferenceClient(MessageHandler):
         print("Connected to inference server: %s" % session.remote_endpoint)
         await session.send(HelloMessage(message = "Hello from Robophone Python server running on %s %s" % (platform.system(), platform.release())))
         self._session = session
-    
+
     async def on_disconnect(self, session: Session):
         print("Disconnected from inference server: %s" % session.remote_endpoint)
         self._session = None
         await self._queue.put(None) # send a None to indicate disconnected
-    
+
     @handler(HelloMessage)
     async def handle_HelloMessage(self, session: Session, msg: HelloMessage, timestamp: float):
         print("Hello received: %s" % msg.message)
-    
+
     @handler(InferenceResponseMessage)
     async def handle_InferenceResponseMessage(self, session: Session, msg: InferenceResponseMessage, timestamp: float):
         await self._queue.put(msg)
@@ -172,11 +172,11 @@ class RobotArmServer(MessageHandler):
             gripper_rotate_degrees=0,
             wait_for_frame=True # wait until completion
         )
-        arm_process.set_camera_frame_provider(provider=CameraFrameProvider())
+        arm_process.set_camera_frame_provider(provider=camera_process.create_frame_provider())
 
     def _new_dataset_writer(self):
-        return DatasetWriter(recording_dir=self._recording_dir, dataset_prefix="example")
-  
+        return DatasetWriter(recording_dir=self._recording_dir, dataset_prefix="example", num_cameras=self._camera_process.num_cameras)
+
     def _record_observation(self, observation: ArmObservation):
         if self._dataset_writer is not None:
             self._dataset_writer.record_observation(
@@ -194,7 +194,7 @@ class RobotArmServer(MessageHandler):
         if self._inference_client is not None:
             tasks.append(self._inference_client.run())
         await asyncio.gather(*tasks)
-    
+
     async def _run_replay_and_inference(self):
         try:
             # First, handle replay to robot
@@ -249,16 +249,16 @@ class RobotArmServer(MessageHandler):
             self._arm_process.set_motor_radians(target_motor_radians=motor_radians)
             await asyncio.sleep(1.0 / self._replay_hz)
         print("Finished replay")
-    
+
     async def on_connect(self, session: Session):
         print("Connection from: %s" % session.remote_endpoint)
         await session.send(HelloMessage(message = "Hello from Robophone Python server running on %s %s" % (platform.system(), platform.release())))
         self.sessions.add(session)
-    
+
     async def on_disconnect(self, session: Session):
         print("Disconnected from: %s" % session.remote_endpoint)
         self.sessions.remove(session)
-    
+
     @handler(HelloMessage)
     async def handle_HelloMessage(self, session: Session, msg: HelloMessage, timestamp: float):
         print("Hello received: %s" % msg.message)
@@ -269,14 +269,14 @@ class RobotArmServer(MessageHandler):
             if self._dataset_writer is None:
                 self._dataset_writer = self._new_dataset_writer()
                 print(f"Begin episode: {self._dataset_writer.directory}")
-    
+
     @handler(EndEpisodeMessage)
     async def handle_EndEpisodeMessage(self, session: Session, msg: EndEpisodeMessage, timestamp: float):
         if self._dataset_writer is not None:
             self._dataset_writer.finish()
             self._dataset_writer = None
             print("End episode")
-    
+
     @handler(PoseStateMessage)
     async def handle_PoseStateMessage(self, session: Session, msg: PoseStateMessage, timestamp: float):
         # Convert (x,y,z) from ARKit -> (x,z,y) in robot frame
@@ -319,7 +319,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser("robotest")
     parser.add_argument("--list-serial-ports", action="store_true", help="List available serial ports and exit")
     parser.add_argument("--serial-port", metavar="name", action="store", type=str, help="Serial port to use")
-    parser.add_argument("--camera", metavar="index", action="store", type=int, help="Camera to use")
+    parser.add_argument("--camera", metavar="indices", action="store", type=str, default="0", help="Camera(s) to use")
     parser.add_argument("--server-port", metavar="number", action="store", type=int, default=8000, help="Server port (for both TCP and UDP)")
     parser.add_argument("--record-to", metavar="directory", action="store", type=str, help="Save recorded data")
     parser.add_argument("--infer", action="store_true", help="Run inference")
@@ -333,9 +333,11 @@ if __name__ == "__main__":
     if options.infer_on_replay:
         options.infer = True
 
+    camera_idxs = [ int(camera_idx) for camera_idx in options.camera.split(",") ]
+
     serial_port = get_serial_port()
     arm_process = ArmProcess(serial_port=serial_port)
-    camera_process = CameraProcess(camera_idx=options.camera)
+    camera_process = CameraProcess(camera_idxs=camera_idxs)
 
     tasks = []
     server = RobotArmServer(
