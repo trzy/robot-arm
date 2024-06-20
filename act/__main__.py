@@ -38,6 +38,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 import os
 import pickle
+from typing import List
 
 import cv2
 import torch
@@ -202,8 +203,7 @@ async def _infer(options: Namespace, input_queue: asyncio.Queue, output_queue: a
             t += 1
 
 def prepare_image(frame: np.ndarray) -> torch.Tensor:
-    frame = frame.transpose([2, 0, 1])  # (height,width,channels) -> (channels,height,width)
-    frame = np.stack([ frame ], axis=0)
+    frame = frame.transpose([0, 3, 1, 2])  # (num_cameras,height,width,channels) -> (num_cameras,channels,height,width)
     return torch.from_numpy(frame / 255.0).float().cuda().unsqueeze(0)
 
 def make_policy_config(options: Namespace, camera_names: List[str]) -> Namespace:
@@ -364,7 +364,7 @@ class HelloMessage(BaseModel):
 
 class InferenceRequestMessage(BaseModel):
     motor_radians: Annotated[List[float], Len(min_length=5, max_length=5)]
-    frame: bytes
+    frames: List[str]
 
 class InferenceResponseMessage(BaseModel):
     target_motor_radians: Annotated[List[float], Len(min_length=5, max_length=5)]
@@ -403,8 +403,12 @@ class InferenceServer(MessageHandler):
 
     @handler(InferenceRequestMessage)
     async def handle_InferenceRequestMessage(self, session: Session, msg: InferenceRequestMessage, timestamp: float):
-        jpeg = np.frombuffer(buffer=base64.b64decode(msg.frame), dtype=np.uint8)
-        frame = cv2.imdecode(jpeg, cv2.IMREAD_COLOR)
+        frames = []
+        for i in range(len(msg.frames)):
+            jpeg = np.frombuffer(buffer=base64.b64decode(msg.frames[i]), dtype=np.uint8)
+            frame = cv2.imdecode(jpeg, cv2.IMREAD_COLOR)
+            frames.append(frame)
+        frame = np.stack(frames, axis=0)
         motor_radians = np.array(msg.motor_radians)
         await self._input_queue.put(Observation(qpos=motor_radians, image=frame))
 

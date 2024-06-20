@@ -68,7 +68,7 @@ class EndEpisodeMessage(BaseModel):
 
 class InferenceRequestMessage(BaseModel):
     motor_radians: Annotated[List[float], Len(min_length=5, max_length=5)]
-    frame: str
+    frames: List[str]
 
 class InferenceResponseMessage(BaseModel):
     target_motor_radians: Annotated[List[float], Len(min_length=5, max_length=5)]
@@ -103,10 +103,13 @@ class InferenceClient(MessageHandler):
 
     async def send_observation(self, observation: ArmObservation):
         if self._session is not None:
-            success, jpeg = cv2.imencode('.jpg', observation.frame)
-            jpeg_bytes = jpeg.tobytes() if success else bytes()
-            frame_base64 = base64.b64encode(jpeg_bytes)
-            msg = InferenceRequestMessage(motor_radians=observation.observed_motor_radians, frame=frame_base64)
+            num_cameras, _, _, _ = observation.frame.shape
+            frames_base64: List[str] = []
+            for i in range(num_cameras):
+                success, jpeg = cv2.imencode('.jpg', observation.frame[i,:,:,:])
+                jpeg_bytes = jpeg.tobytes() if success else bytes()
+                frames_base64.append(base64.b64encode(jpeg_bytes))
+            msg = InferenceRequestMessage(motor_radians=observation.observed_motor_radians, frames=frames_base64)
             await self._session.send(message=msg)
             print("Sent inference request")
 
