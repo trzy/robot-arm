@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import os
+import timeit
 from typing import List
 
 import h5py
@@ -122,6 +123,8 @@ class EpisodicDataset(torch.utils.data.Dataset):
         return len(self.episode_idxs)
 
     def __getitem__(self, index):
+        t0 = timeit.default_timer()
+
         sample_full_episode = False # hardcode
 
         episode_idx = self.episode_idxs[index]
@@ -180,7 +183,8 @@ class EpisodicDataset(torch.utils.data.Dataset):
         action_data = (action_data - self.norm_stats["action_mean"]) / self.norm_stats["action_std"]
         qpos_data = (qpos_data - self.norm_stats["qpos_mean"]) / self.norm_stats["qpos_std"]
 
-        return image_data, qpos_data, action_data, is_pad
+        t1 = timeit.default_timer()
+        return image_data, qpos_data, action_data, is_pad, (t1 - t0)
 
 
 def get_norm_stats(examples: ExampleEpisodes):

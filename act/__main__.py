@@ -34,11 +34,13 @@
 import argparse
 from argparse import Namespace
 import asyncio
+from collections import defaultdict
 from copy import deepcopy
 from dataclasses import dataclass
 import os
 import pickle
-from typing import List
+import timeit
+from typing import DefaultDict, List
 
 import cv2
 import torch
@@ -249,7 +251,7 @@ def make_optimizer(policy_class: str, policy):
     return optimizer
 
 def forward_pass(data, policy):
-    image_data, qpos_data, action_data, is_pad = data
+    image_data, qpos_data, action_data, is_pad = data[0:4]
     image_data, qpos_data, action_data, is_pad = image_data.cuda(), qpos_data.cuda(), action_data.cuda(), is_pad.cuda()
     return policy(qpos_data, image_data, action_data, is_pad)
 
@@ -293,9 +295,12 @@ def train_bc(train_dataloader, val_dataloader, config):
         print(summary_string)
 
         # Training
+        timings: DefaultDict[str, List[float]] = defaultdict(list)
         policy.train()
         optimizer.zero_grad()
         for batch_idx, data in enumerate(train_dataloader):
+            t0 = timeit.default_timer()
+
             forward_dict = forward_pass(data, policy)
             # Backward
             loss = forward_dict["loss"]
@@ -303,6 +308,12 @@ def train_bc(train_dataloader, val_dataloader, config):
             optimizer.step()
             optimizer.zero_grad()
             train_history.append(detach_dict(forward_dict))
+            
+            t1 = timeit.default_timer()
+            t_data_loader = torch.sum(data[-1]).item()  # sum entire batch of timing results
+            timings["data"].append(t_data_loader)
+            timings["model"].append(t1 - t0)
+
         epoch_summary = compute_dict_mean(train_history[(batch_idx+1)*epoch:(batch_idx+1)*(epoch+1)])
         epoch_train_loss = epoch_summary["loss"]
         print(f"Train loss: {epoch_train_loss:.5f}")
@@ -311,10 +322,12 @@ def train_bc(train_dataloader, val_dataloader, config):
             summary_string += f"{k}: {v.item():.3f} "
         print(summary_string)
 
-        if epoch % 1000 == 0 and epoch > 3000:
+        if epoch % 1000 == 0:
             ckpt_path = os.path.join(ckpt_dir, f"policy_epoch_{epoch}_seed_{seed}.ckpt")
             torch.save(policy.state_dict(), ckpt_path)
             plot_history(train_history, validation_history, epoch, ckpt_dir, seed)
+
+        print_timings(timings=timings)
 
     ckpt_path = os.path.join(ckpt_dir, f"policy_last.ckpt")
     torch.save(policy.state_dict(), ckpt_path)
@@ -328,6 +341,20 @@ def train_bc(train_dataloader, val_dataloader, config):
     plot_history(train_history, validation_history, num_epochs, ckpt_dir, seed)
 
     return best_ckpt_info
+
+def print_timings(timings: DefaultDict[str, List[float]]):
+    longest_measurement_name_length = max([ len(measurement_name) for measurement_name in timings.keys()])
+    total_time = np.sum([ np.sum(timings[measurement_name]) for measurement_name in timings ])
+    print("")
+    print("Timings")
+    print("-------")
+    for measurement_name, measurements in timings.items():
+        seconds = np.sum(measurements)
+        millis = seconds / 1e-3
+        pct_of_total = 100.0 * (seconds / total_time)
+        padding = " " * (longest_measurement_name_length - len(measurement_name))
+        print(f"{measurement_name}{padding} = {millis:.1f} ms ({pct_of_total:.2f}%)")
+    print("")
 
 def plot_history(train_history, validation_history, num_epochs, ckpt_dir, seed):
     # Save training curves
