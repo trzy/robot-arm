@@ -353,7 +353,7 @@ def print_timings(timings: DefaultDict[str, List[float]]):
         millis = seconds / 1e-3
         pct_of_total = 100.0 * (seconds / total_time)
         padding = " " * (longest_measurement_name_length - len(measurement_name))
-        print(f"{measurement_name}{padding} = {millis:.1f} ms ({pct_of_total:.2f}%)")
+        print(f"{measurement_name}{padding} = {millis:.1f} ms ({pct_of_total:.1f}%)")
     print("")
 
 def plot_history(train_history, validation_history, num_epochs, ckpt_dir, seed):
