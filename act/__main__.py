@@ -300,8 +300,8 @@ def train_bc(train_dataloader, val_dataloader, config):
         optimizer.zero_grad()
         for batch_idx, data in enumerate(train_dataloader):
             t0 = timeit.default_timer()
-
             forward_dict = forward_pass(data, policy)
+    
             # Backward
             loss = forward_dict["loss"]
             loss.backward()
