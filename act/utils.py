@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from glob import glob
 import os
 import timeit
 from typing import List, Tuple
@@ -18,8 +18,25 @@ e = IPython.embed
 # Routines for detecting and loading the example episodes in the dataset directory.
 ####################################################################################################
 
+def get_dirs(dataset_dir: str) -> List[str]:
+    # First, split on ,
+    specified_dirs = dataset_dir.split(",")
+
+    # Expand wildcards for each and retain only the directories. Then, extract the episode
+    # directories from each.
+    episode_dirs = []
+    for specified_dir in specified_dirs:
+        dataset_dirs = [ dir for dir in glob(specified_dir) if os.path.isdir(dir) ]
+        for dir in dataset_dirs:
+            for episode_dir in os.listdir(dir):
+                fully_resolved_episode_dir = os.path.join(dir, episode_dir)
+                if episode_dir.startswith("example-") and os.path.isdir(fully_resolved_episode_dir):
+                    episode_dirs.append(fully_resolved_episode_dir)
+    
+    return list(set(episode_dirs))
+
 def get_episode_filepaths_and_camera_names(dataset_dir: str) -> Tuple[List[str], List[str]]:
-    dirs = [ os.path.join(dataset_dir, dir) for dir in os.listdir(dataset_dir) if dir.startswith("example-") and os.path.isdir(os.path.join(dataset_dir, dir)) ]
+    dirs = get_dirs(dataset_dir=dataset_dir)
     filepaths: List[str] = []
     camera_names: List[str] = []
     for dir in dirs:
@@ -153,10 +170,10 @@ def get_norm_stats(filepaths: List[str]):
 
 def load_data(dataset_dir: str, chunk_size: int, batch_size_train: int, batch_size_val: int):
     # Detect examples
-    print(f'\nData from: {dataset_dir}\n')
+    print(f"\nData from: {dataset_dir}")
     filepaths, camera_names = get_episode_filepaths_and_camera_names(dataset_dir=dataset_dir)
     num_episodes = len(filepaths)
-    print(f"{num_episodes} episodes")
+    print(f"{num_episodes} episodes\n")
 
     # obtain train test split
     train_ratio = 0.8

@@ -457,7 +457,7 @@ if __name__ == "__main__":
 
     # Training: file source and destination
     parser.add_argument("--checkpoint-dir", action="store", type=str, help="Directory to write checkpoints")
-    parser.add_argument("--dataset-dir", action="store", type=str, help="Directory from which to read episodes (i.e., dataset_dir/example-*/data.hdf5)")
+    parser.add_argument("--dataset-dir", action="store", type=str, help="Directories from which to read episodes (comma-separated, wildcards supported). Each must contain subdirectories with example episodes, e.g.: dataset_dir/example-*/data.hdf5.")
 
     # Inference: file source and server
     parser.add_argument("--checkpoint-file", action="store", type=str, help="Checkpoint filepath for inference (dataset_stats.pkl must be present in same directory)")
