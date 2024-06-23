@@ -151,6 +151,9 @@ async def _infer(options: Namespace, input_queue: asyncio.Queue, output_queue: a
                 t = 0
                 all_time_actions = np.zeros(all_time_actions.shape)
                 continue
+            if observation.image.shape[0] != options.num_cameras:
+                print(f"Error: Received observation with {observation.image.shape[0]} camera images but model expects {options.num_cameras}")
+                continue
             qpos_numpy = observation.qpos
             curr_image = prepare_image(frame=observation.image)
             qpos = pre_process_fn(qpos_numpy)
@@ -159,10 +162,10 @@ async def _infer(options: Namespace, input_queue: asyncio.Queue, output_queue: a
             # Query the policy
             if policy_class == "ACT":
                 if t % query_frequency == 0:
-                    print(f"t={t} infer (query_frequency={query_frequency})")
+                    print(f"t={t} infer (query_frequency={query_frequency}) image={observation.image.shape}")
                     all_actions = policy(qpos, curr_image)
                 else:
-                    print(f"t={t} sample {t%query_frequency}")
+                    print(f"t={t} sample {t%query_frequency} image={observation.image.shape}")
 
                 if options.temporal_aggregation:
                     # Temporal aggregation code fixed by: @Mankaran32
