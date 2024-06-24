@@ -215,6 +215,7 @@ def make_policy_config(options: Namespace, camera_names: List[str]) -> Namespace
     policy_config = deepcopy(options)
     lr_backbone = 1e-5
     backbone = "resnet18"
+    use_multiple_backbones = options.multiple_backbones
     if options.policy_class == "ACT":
         enc_layers = 4
         dec_layers = 7
@@ -226,11 +227,13 @@ def make_policy_config(options: Namespace, camera_names: List[str]) -> Namespace
         setattr(policy_config, "dec_layers", dec_layers)
         setattr(policy_config, "nheads", nheads)
         setattr(policy_config, "camera_names", camera_names)
+        setattr(policy_config, "use_multiple_backbones", use_multiple_backbones)
     elif options.policy_class == "CNNMLP":
         setattr(policy_config, "lr_backbone", lr_backbone)
         setattr(policy_config, "backbone", backbone)
         setattr(policy_config, "num_queries", 1)
         setattr(policy_config, "camera_names", camera_names)
+        setattr(policy_config, "use_multiple_backbones", use_multiple_backbones)
     else:
         raise NotImplementedError
     return policy_config
@@ -479,6 +482,7 @@ if __name__ == "__main__":
     parser.add_argument("--chunk-size", action="store", type=int, default=100, help="ACT model chunk size")
     parser.add_argument("--hidden-dim", action="store", type=int, default=512, help="ACT model hidden dimension")
     parser.add_argument("--dim-feedforward", action="store", type=int, default=32000, help="ACT model feed-forward dimension")
+    parser.add_argument("--multiple-backbones", action="store_true", default=False, help="Use a separate ResNet backbone for each camera")
 
     # Validate
     options = parser.parse_args()
