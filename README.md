@@ -1,4 +1,4 @@
-# Imitation Learning w/ iPhone-based Teleoperation and a Low-Cost Robot Arm
+# Imitation Learning w/ iPhone-based Teleoperation of a Low-Cost Robot Arm
 *Bart Trzynadlowski, 2024*
 
 ## Overview
