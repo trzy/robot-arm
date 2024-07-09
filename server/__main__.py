@@ -319,7 +319,7 @@ def get_serial_port() -> str:
     return port
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("robotest")
+    parser = argparse.ArgumentParser("server")
     parser.add_argument("--list-serial-ports", action="store_true", help="List available serial ports and exit")
     parser.add_argument("--serial-port", metavar="name", action="store", type=str, help="Serial port to use")
     parser.add_argument("--camera", metavar="indices", action="store", type=str, default="0", help="Camera(s) to use")
