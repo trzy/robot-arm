@@ -1,0 +1,106 @@
+[tool.poetry]
+name = "robot-arm-teleoperator"
+version = "0.1.0"
+description = "Robot arm teleoperation and ACT (Action Chunking with Transformers) implementation"
+authors = ["Robot Arm Team"]
+readme = "README.md"
+packages = [
+    {include = "act"},
+    {include = "server"},
+]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+# Server dependencies
+ikpy = {extras = ["plot"], version = "*"}
+pyserial = "*"
+dynamixel-sdk = "*"
+pydantic = "*"
+h5py = "*"
+opencv-python = "*"
+# ACT dependencies
+torch = "*"
+torchvision = "*"
+pyquaternion = "*"
+pyyaml = "*"
+rospkg = "*"
+pexpect = "*"
+mujoco = "2.3.7"
+dm_control = "1.0.14"
+matplotlib = "*"
+einops = "*"
+packaging = "*"
+ipython = "*"
+detr = {git = "https://github.com/trzy/detr-for-low-cost-robot-arm.git"}
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.4.0"
+pytest-cov = "^4.1.0"
+pytest-mock = "^3.11.0"
+
+# Poetry scripts for testing - use `poetry run pytest` directly
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--verbose",
+    "--cov=act",
+    "--cov=server", 
+    "--cov-report=term-missing",
+    "--cov-report=html:htmlcov",
+    "--cov-report=xml:coverage.xml",
+    "--cov-fail-under=80"
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests", 
+    "slow: Tests that take a long time to run"
+]
+filterwarnings = [
+    "error",
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning"
+]
+
+[tool.coverage.run]
+source = ["act", "server"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/env/*",
+    "*/build/*",
+    "*/dist/*"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod"
+]
+show_missing = true
+precision = 2
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.xml]
+output = "coverage.xml"
